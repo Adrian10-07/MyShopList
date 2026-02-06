@@ -9,10 +9,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.List
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,21 +24,26 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.myshoplist.features.add_product.presentation.screens.AddProductScreen
+import com.example.myshoplist.features.add_product.presentation.viewmodels.AddProductViewModel
 import com.example.myshoplist.features.add_product.domain.entities.Product
 import com.example.myshoplist.features.shopping_list.presentation.viewmodels.ShoppingListViewModel
 import org.json.JSONObject
 import java.text.NumberFormat
 import java.util.*
+import androidx.compose.foundation.layout.Box
+
 
 @Composable
 fun ShoppingListScreen(
-    viewModel: ShoppingListViewModel = viewModel(),
+    shoppingListViewModel: ShoppingListViewModel = viewModel(),
+    addProductViewModel: AddProductViewModel = viewModel(),
     userName: String = "PapaFeliz",
-    onNavigateToAddProduct: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
-    onNavigateToPurchases: () -> Unit = {}
+    onNavigateToPurchases: () -> Unit = {},
+    onLogout: () -> Unit = {}
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by shoppingListViewModel.uiState.collectAsState()
 
     // Log de cambios de estado
     LaunchedEffect(uiState) {
@@ -71,7 +76,10 @@ fun ShoppingListScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Header
-            HeaderSection(userName = userName)
+            HeaderSection(
+                userName = userName,
+                onLogout = onLogout
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -89,61 +97,32 @@ fun ShoppingListScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botón "Agregar Cositas" (solo vista, no funcional)
-            Button(
-                onClick = { /* No hace nada */ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFF7043),
-                    disabledContainerColor = Color(0xFFFF7043)
-                ),
-                shape = RoundedCornerShape(28.dp),
-                enabled = false // Deshabilitado como solicitaste
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    tint = Color.White
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Agregar Cositas",
-                    color = Color.White,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+            // ✨ IMPORTAR EL MODAL AQUÍ - Una sola línea
+            AddProductScreen(
+                viewModel = addProductViewModel,
+                onProductAdded = {
+                    // Recargar la lista cuando se agrega un producto
+                    shoppingListViewModel.refresh()
+                }
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             // Lista de productos
             when (uiState) {
                 is ShoppingListUiState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = Color(0xFFFF7043))
-                    }
+                    LoadingView()
                 }
 
                 is ShoppingListUiState.Success -> {
                     val items = (uiState as ShoppingListUiState.Success).items
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        items(items) { item ->
-                            ProductItemCard(item = item)
-                        }
-                    }
+                    ProductList(items = items)
                 }
 
                 is ShoppingListUiState.Error -> {
                     ErrorView(
                         message = (uiState as ShoppingListUiState.Error).message,
-                        onRetry = { viewModel.refresh() }
+                        onRetry = { shoppingListViewModel.refresh() }
                     )
                 }
 
@@ -156,7 +135,10 @@ fun ShoppingListScreen(
 }
 
 @Composable
-fun HeaderSection(userName: String) {
+private fun HeaderSection(
+    userName: String,
+    onLogout: () -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -180,13 +162,13 @@ fun HeaderSection(userName: String) {
             text = "CERRAR SESIÓN",
             fontSize = 12.sp,
             color = Color(0xFF718096),
-            modifier = Modifier.clickable { /* Implementar logout */ }
+            modifier = Modifier.clickable { onLogout() }
         )
     }
 }
 
 @Composable
-fun TotalEstimatedCard(total: Double) {
+private fun TotalEstimatedCard(total: Double) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -216,7 +198,36 @@ fun TotalEstimatedCard(total: Double) {
 }
 
 @Composable
-fun ProductItemCard(item: Product) {
+private fun LoadingView() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator(color = Color(0xFFFF7043))
+    }
+}
+
+@Composable
+private fun ProductList(items: List<Product>) {
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(items) { item ->
+            ProductItemCard(
+                item = item,
+                onTogglePurchased = { /* TODO: Implementar */ },
+                onDelete = { /* TODO: Implementar */ }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProductItemCard(
+    item: Product,
+    onTogglePurchased: () -> Unit,
+    onDelete: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -237,17 +248,13 @@ fun ProductItemCard(item: Product) {
                     .size(32.dp)
                     .clip(CircleShape)
                     .background(Color(0xFFF7FAFC))
-                    .clickable { /* Toggle purchased */ },
+                    .clickable { onTogglePurchased() },
                 contentAlignment = Alignment.Center
-            ) {
-                // Radio button vacío
-            }
+            ) {}
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.name,
                     fontSize = 18.sp,
@@ -272,9 +279,7 @@ fun ProductItemCard(item: Product) {
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            IconButton(
-                onClick = { /* Delete product */ }
-            ) {
+            IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Eliminar",
@@ -286,28 +291,19 @@ fun ProductItemCard(item: Product) {
 }
 
 @Composable
-fun ErrorView(message: String, onRetry: () -> Unit) {
+private fun ErrorView(message: String, onRetry: () -> Unit) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = "⚠️",
-            fontSize = 64.sp
-        )
+        Text(text = "⚠️", fontSize = 64.sp)
         Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = message,
-            fontSize = 16.sp,
-            color = Color(0xFF718096)
-        )
+        Text(text = message, fontSize = 16.sp, color = Color(0xFF718096))
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = onRetry,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFFF7043)
-            )
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF7043))
         ) {
             Text("Reintentar")
         }
@@ -315,16 +311,13 @@ fun ErrorView(message: String, onRetry: () -> Unit) {
 }
 
 @Composable
-fun EmptyView() {
+private fun EmptyView() {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = "🛒",
-            fontSize = 64.sp
-        )
+        Text(text = "🛒", fontSize = 64.sp)
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "No hay productos pendientes",
@@ -342,7 +335,7 @@ fun EmptyView() {
 }
 
 @Composable
-fun BottomNavigationBar(
+private fun BottomNavigationBar(
     selectedTab: Int,
     onNavigateToHistory: () -> Unit,
     onNavigateToPurchases: () -> Unit
@@ -364,7 +357,7 @@ fun BottomNavigationBar(
             NavigationButton(
                 icon = Icons.Outlined.List,
                 isSelected = selectedTab == 0,
-                onClick = { /* Ya estamos aquí */ }
+                onClick = { }
             )
             NavigationButton(
                 icon = Icons.Outlined.History,
@@ -381,7 +374,7 @@ fun BottomNavigationBar(
 }
 
 @Composable
-fun NavigationButton(
+private fun NavigationButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     isSelected: Boolean,
     onClick: () -> Unit

@@ -7,8 +7,9 @@ object Login
 
 @Serializable
 object Register
+
 @Serializable
-object Home
+object ShopList
 
 @Serializable
 object AddProduct
