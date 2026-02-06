@@ -44,12 +44,10 @@ fun LoginScreen(
     viewModel: LoginViewModel,
     onLoginSuccess: () -> Unit
 ) {
-    // Escuchamos el estado del ViewModel
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // Si el login es exitoso, mostramos un mensaje y navegamos
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
             scope.launch {
@@ -98,7 +96,7 @@ fun LoginScreen(
 
                 // Título
                 Text(
-                    text = "MyShopLi",
+                    text = "MyShopList",
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
                     fontSize = 24.sp
@@ -106,7 +104,7 @@ fun LoginScreen(
 
                 // Subtítulo
                 Text(
-                    text = "¿Qué bueno verte otra vez!",
+                    text = "¡Bienvenido de nuevo!",
                     color = Color.Gray,
                     fontSize = 12.sp,
                     modifier = Modifier.padding(top = 5.dp)
@@ -116,7 +114,7 @@ fun LoginScreen(
 
                 // Label Usuario
                 Text(
-                    text = "USUARIO",
+                    text = "Correo Electronico",
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF666666),
@@ -131,7 +129,7 @@ fun LoginScreen(
                 TextField(
                     value = uiState.email,
                     onValueChange = { viewModel.onEmailChanged(it) },
-                    placeholder = { Text("Ej. PapaFeliz123") },
+                    placeholder = { Text("juan@example.com") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp)),
@@ -148,7 +146,7 @@ fun LoginScreen(
 
                 // Label Correo
                 Text(
-                    text = "CORREO",
+                    text = "Contraseña",
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF666666),
@@ -163,7 +161,7 @@ fun LoginScreen(
                 TextField(
                     value = uiState.password,
                     onValueChange = { viewModel.onPasswordChanged(it) },
-                    placeholder = { Text("hola@ejemplo.com") },
+                    placeholder = { Text("password123") },
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -177,7 +175,6 @@ fun LoginScreen(
                     singleLine = true
                 )
 
-                // Error (solo se muestra si existe)
                 uiState.error?.let {
                     Text(
                         text = it,
@@ -189,7 +186,6 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(25.dp))
 
-                // Botón de Ingreso
                 Button(
                     onClick = { viewModel.login() },
                     modifier = Modifier
@@ -197,7 +193,7 @@ fun LoginScreen(
                         .height(50.dp)
                         .clip(RoundedCornerShape(12.dp)),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFF8C00), // Naranja
+                        containerColor = Color(0xFFFF8C00),
                         disabledContainerColor = Color(0xFFFFB347)
                     ),
                     enabled = !uiState.isLoading
@@ -205,7 +201,7 @@ fun LoginScreen(
                     if (uiState.isLoading) {
                         Text("Cargando...", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     } else {
-                        Text("Entrar", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text("Ingresar", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                     }
                 }
 
@@ -217,7 +213,6 @@ fun LoginScreen(
                     fontSize = 12.sp,
                     color = Color(0xFFFF8C00)
                 )
-
                 Spacer(modifier = Modifier.height(20.dp))
             }
         }
