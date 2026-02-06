@@ -15,11 +15,9 @@ class ShoppingListViewModel(
     private val shoppingListUseCase: ShoppingListUseCase,
     private val deleteProductUseCase: DeleteProductUseCase,
     private val updateProductUseCase: UpdateProductUseCase
-
 ) : ViewModel() {
 
-    private val _uiState =
-        MutableStateFlow<ShoppingListUiState>(ShoppingListUiState.Loading)
+    private val _uiState = MutableStateFlow<ShoppingListUiState>(ShoppingListUiState.Loading)
     val uiState: StateFlow<ShoppingListUiState> = _uiState.asStateFlow()
 
     init {
@@ -27,8 +25,7 @@ class ShoppingListViewModel(
     }
 
     fun loadProducts() {
-        _uiState.value = ShoppingListUiState.Loading
-
+        // No siempre es necesario mostrar Loading al refrescar, pero ayuda en la carga inicial
         viewModelScope.launch {
             val result = shoppingListUseCase()
 
@@ -37,6 +34,7 @@ class ShoppingListViewModel(
                     _uiState.value = if (items.isEmpty()) {
                         ShoppingListUiState.Empty
                     } else {
+                        // Asegúrate de que ShoppingListUiState.Success reciba List<Product>
                         ShoppingListUiState.Success(items)
                     }
                 }
@@ -50,26 +48,25 @@ class ShoppingListViewModel(
 
     fun deleteProduct(id: String) {
         viewModelScope.launch {
-            deleteProductUseCase(id)
-            loadProducts()
+            deleteProductUseCase(id).onSuccess {
+                loadProducts() // Recarga la lista tras eliminar
+            }
+        }
+    }
+
+    fun updateProduct(id: String) {
+        viewModelScope.launch {
+            val result = updateProductUseCase(id)
+
+            result.onSuccess {
+
+                loadProducts()
+            }.onFailure {
+            }
         }
     }
 
     fun refresh() {
         loadProducts()
-    }
-    fun updateProduct(id: String) {
-        viewModelScope.launch {
-
-            val result = updateProductUseCase(id)
-
-            result.onSuccess {
-                refresh()
-            }.onFailure {
-                _uiState.value = ShoppingListUiState.Error(
-                    it.message ?: "Error al actualizar producto"
-                )
-            }
-        }
     }
 }

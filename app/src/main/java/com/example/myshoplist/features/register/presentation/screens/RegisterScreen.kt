@@ -58,9 +58,9 @@ fun RegisterScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFC0E8DB)) // Fondo verde mint
+            .background(Color(0xFFC0E8DB))
     ) {
-        // Botón atrás en la esquina superior izquierda
+
         IconButton(
             onClick = onBackClick,
             modifier = Modifier

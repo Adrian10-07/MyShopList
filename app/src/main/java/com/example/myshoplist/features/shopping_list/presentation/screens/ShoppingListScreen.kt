@@ -32,6 +32,7 @@ import org.json.JSONObject
 import java.text.NumberFormat
 import java.util.*
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.filled.Check
 
 
 @Composable
@@ -51,7 +52,7 @@ fun ShoppingListScreen(
     LaunchedEffect(uiState) {
         val logData = JSONObject().apply {
             put("timestamp", System.currentTimeMillis())
-            put("label", "🔄 SCREEN - Estado cambiado")
+            put("label", " SCREEN - Estado cambiado")
             put("data", JSONObject().apply {
                 put("newState", uiState.javaClass.simpleName)
             })
@@ -59,7 +60,6 @@ fun ShoppingListScreen(
         Log.d("ShoppingListScreen", logData.toString(2))
     }
 
-    // Dialog de confirmación para eliminar
     if (showDeleteConfirmation && productToDelete != null) {
         DeleteConfirmationDialog(
             productName = productToDelete?.name ?: "",
@@ -103,7 +103,6 @@ fun ShoppingListScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Total estimado
             when (uiState) {
                 is ShoppingListUiState.Success -> {
                     val items = (uiState as ShoppingListUiState.Success).items
@@ -304,11 +303,11 @@ private fun ProductItemCard(
     onTogglePurchased: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val isMarkedAsPurchased = item.isPurchased == 1
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -323,10 +322,20 @@ private fun ProductItemCard(
                 modifier = Modifier
                     .size(32.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFFF7FAFC))
+                    // Usamos la comparación lógica que creamos arriba
+                    .background(if (isMarkedAsPurchased) Color(0xFF4CAF50) else Color(0xFFF7FAFC))
                     .clickable { onTogglePurchased() },
                 contentAlignment = Alignment.Center
-            ) {}
+            ) {
+                if (isMarkedAsPurchased) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -335,7 +344,8 @@ private fun ProductItemCard(
                     text = item.name,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF2D3748),
+                    // Opcional: Atenuar el texto si ya está comprado
+                    color = if (isMarkedAsPurchased) Color(0xFFCBD5E0) else Color(0xFF2D3748),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -345,7 +355,6 @@ private fun ProductItemCard(
                     color = Color(0xFF718096)
                 )
             }
-
             Text(
                 text = NumberFormat.getCurrencyInstance(Locale("es", "MX")).format(item.estimatedPrice),
                 fontSize = 18.sp,
@@ -355,7 +364,6 @@ private fun ProductItemCard(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            // Botón de eliminar funcional
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Delete,

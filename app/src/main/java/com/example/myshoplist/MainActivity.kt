@@ -38,8 +38,6 @@ class MainActivity : ComponentActivity() {
 
         )
 
-        Log.d("Main", "AppContainer y Módulos cargados correctamente")
-
         enableEdgeToEdge()
 
         setContent {
