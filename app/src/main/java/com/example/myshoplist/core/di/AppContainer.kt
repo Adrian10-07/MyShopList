@@ -8,11 +8,9 @@ import com.example.myshoplist.features.login.data.repository.AuthRepositoryImpl
 import com.example.myshoplist.features.login.domain.repository.AuthRepository
 import com.example.myshoplist.features.register.data.repository.RegisterRepositoryImpl
 import com.example.myshoplist.features.register.domain.repository.RegisterRepository
-import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
-import kotlinx.serialization.json.Json
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class AppContainer(context: Context) {
 
@@ -20,16 +18,11 @@ class AppContainer(context: Context) {
         .addInterceptor(AuthInterceptor())
         .build()
 
-    private val json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-    }
-
     private fun createRetrofit(baseUrl: String, client: OkHttpClient): Retrofit {
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(client)
-            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
 
@@ -42,6 +35,7 @@ class AppContainer(context: Context) {
     val authRepository: AuthRepository by lazy {
         AuthRepositoryImpl(authApi)
     }
+
     val registerRepository: RegisterRepository by lazy {
         RegisterRepositoryImpl(authApi)
     }

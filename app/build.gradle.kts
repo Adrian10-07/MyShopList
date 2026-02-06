@@ -77,9 +77,9 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.com.squareup.retrofit2.retrofit)
-    // Usamos el alias corregido (camelCase)
     implementation(libs.retrofitKotlinxSerializationConverter)
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation(libs.io.coil.kt.coil.compose)
     implementation(libs.androidx.ui)
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.google.code.gson:gson:2.10.1")
 }
