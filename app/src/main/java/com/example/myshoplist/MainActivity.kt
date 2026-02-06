@@ -1,47 +1,43 @@
 package com.example.myshoplist
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.myshoplist.ui.theme.MyShopListTheme
+import com.example.myshoplist.core.di.AppContainer
+import com.example.myshoplist.core.navigation.NavigationWrapper
+import com.example.myshoplist.core.ui.theme.MyShopListTheme
+import com.example.myshoplist.features.login.di.LoginModule
+import com.example.myshoplist.features.register.di.RegisterModule
+import com.example.myshoplist.features.login.navigation.LoginNavGraph
+import com.example.myshoplist.features.register.navigation.RegisterNavGraph
 
 class MainActivity : ComponentActivity() {
+    lateinit var appContainer: AppContainer
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        appContainer = AppContainer(this)
+
+        val loginModule = LoginModule(appContainer)
+        val registerModule = RegisterModule(appContainer)
+
+
+        val navGraphs = listOf(
+            LoginNavGraph(loginModule),
+            RegisterNavGraph(registerModule)
+
+        )
+
+        Log.d("Main", "AppContainer y Módulos cargados correctamente")
+
         enableEdgeToEdge()
+
         setContent {
             MyShopListTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                NavigationWrapper(navGraphs)
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    MyShopListTheme {
-        Greeting("Android")
     }
 }
