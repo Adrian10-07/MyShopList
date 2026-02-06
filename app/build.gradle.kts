@@ -44,6 +44,7 @@ android {
     flavorDimensions.add("environment")
     productFlavors {
         create("dev") {
+            //192.168.101.227
             dimension = "environment"
             buildConfigField("String", "BASE_URL", "\"http://192.168.101.207:3000/api/\"")
             resValue("string", "app_name", "MyShopList (DEV)")
@@ -68,6 +69,7 @@ dependencies {
     implementation(libs.androidx.navigation.common.ktx)
     implementation(libs.androidx.navigation.runtime.ktx)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.room.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -77,9 +79,11 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.com.squareup.retrofit2.retrofit)
-    // Usamos el alias corregido (camelCase)
     implementation(libs.retrofitKotlinxSerializationConverter)
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation(libs.io.coil.kt.coil.compose)
     implementation(libs.androidx.ui)
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("androidx.compose.material:material-icons-extended")
+
 }
