@@ -23,7 +23,7 @@ class AppContainer(context: Context) {
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(client)
-            .addConverterFactory(GsonConverterFactory.create()) // ✅ CAMBIO CLAVE
+            .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
 
