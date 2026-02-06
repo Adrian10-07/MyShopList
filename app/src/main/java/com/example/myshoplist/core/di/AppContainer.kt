@@ -4,6 +4,8 @@ import android.content.Context
 import com.example.myshoplist.BuildConfig
 import com.example.myshoplist.core.network.AuthApiService
 import com.example.myshoplist.core.network.AuthInterceptor
+import com.example.myshoplist.features.add_product.data.repository.AddProductRepositoryImpl
+import com.example.myshoplist.features.add_product.domain.repository.AddProductRepository
 import com.example.myshoplist.features.login.data.repository.AuthRepositoryImpl
 import com.example.myshoplist.features.login.domain.repository.AuthRepository
 import com.example.myshoplist.features.register.data.repository.RegisterRepositoryImpl
@@ -44,5 +46,9 @@ class AppContainer(context: Context) {
     }
     val registerRepository: RegisterRepository by lazy {
         RegisterRepositoryImpl(authApi)
+    }
+
+    val addProductRepository: AddProductRepository by lazy {
+        AddProductRepositoryImpl(authApi)
     }
 }
