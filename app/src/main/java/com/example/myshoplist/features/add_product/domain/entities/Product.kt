@@ -6,6 +6,6 @@ data class Product(
     val name: String,
     val category: String,
     val estimatedPrice: Double,
-    val isPurchased: Boolean = false,
+    val isPurchased: Int = 0,
     val createdAt: String
 )

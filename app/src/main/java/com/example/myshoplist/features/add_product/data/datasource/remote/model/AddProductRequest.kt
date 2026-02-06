@@ -25,7 +25,7 @@ data class  ProductDto(
     @SerializedName("estimated_price")
     val estimatedPrice: Double,
     @SerializedName("is_purchased")
-    val isPurchased: Boolean,
+    val isPurchased: Int,
     @SerializedName("created_at")
     val createdAt: String
 )

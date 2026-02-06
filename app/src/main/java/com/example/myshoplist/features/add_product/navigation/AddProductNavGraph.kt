@@ -22,10 +22,8 @@ class AddProductNavGraph(
             AddProductScreen(
                 viewModel = viewModel,
                 onNavigateBack = {
-                    navController.popBackStack()
                 },
                 onProductAdded = {
-                    navController.popBackStack()
                 }
             )
         }
