@@ -1,6 +1,7 @@
 package com.example.myshoplist.features.login.presentation.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -42,7 +43,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel,
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: () -> Unit,
+    onRegisterClick: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -211,7 +213,8 @@ fun LoginScreen(
                 Text(
                     text = "¿No tienes cuenta? Regístrate",
                     fontSize = 12.sp,
-                    color = Color(0xFFFF8C00)
+                    color = Color(0xFFFF8C00),
+                    modifier = Modifier.clickable { onRegisterClick() }
                 )
                 Spacer(modifier = Modifier.height(20.dp))
             }

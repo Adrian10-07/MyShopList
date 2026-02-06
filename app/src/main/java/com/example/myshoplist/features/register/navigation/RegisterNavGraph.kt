@@ -28,6 +28,9 @@ class RegisterNavGraph(
                 },
                 onRegisterSuccess = {
                     navController.navigate(Login)
+                },
+                onLoginClick = {
+                    navController.navigate(Login)
                 }
             )
         }
