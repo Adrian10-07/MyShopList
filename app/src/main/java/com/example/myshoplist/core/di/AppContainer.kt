@@ -4,6 +4,8 @@ import android.content.Context
 import com.example.myshoplist.BuildConfig
 import com.example.myshoplist.core.network.AuthApiService
 import com.example.myshoplist.core.network.AuthInterceptor
+import com.example.myshoplist.features.add_product.data.repository.AddProductRepositoryImpl
+import com.example.myshoplist.features.add_product.domain.repository.AddProductRepository
 import com.example.myshoplist.features.login.data.repository.AuthRepositoryImpl
 import com.example.myshoplist.features.login.domain.repository.AuthRepository
 import com.example.myshoplist.features.register.data.repository.RegisterRepositoryImpl
@@ -13,7 +15,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 class AppContainer(context: Context) {
-
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(AuthInterceptor())
         .build()
@@ -22,7 +23,7 @@ class AppContainer(context: Context) {
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
+            .addConverterFactory(GsonConverterFactory.create()) // ✅ CAMBIO CLAVE
             .build()
     }
 
@@ -35,8 +36,11 @@ class AppContainer(context: Context) {
     val authRepository: AuthRepository by lazy {
         AuthRepositoryImpl(authApi)
     }
-
     val registerRepository: RegisterRepository by lazy {
         RegisterRepositoryImpl(authApi)
+    }
+
+    val addProductRepository: AddProductRepository by lazy {
+        AddProductRepositoryImpl(authApi)
     }
 }
