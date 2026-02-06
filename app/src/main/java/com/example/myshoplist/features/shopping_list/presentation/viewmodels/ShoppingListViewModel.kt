@@ -2,7 +2,9 @@ package com.example.myshoplist.features.shopping_list.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myshoplist.features.shopping_list.domain.use_case.DeleteProductUseCase
 import com.example.myshoplist.features.shopping_list.domain.use_case.ShoppingListUseCase
+import com.example.myshoplist.features.shopping_list.domain.use_case.UpdateProductUseCase
 import com.example.myshoplist.features.shopping_list.presentation.screens.ShoppingListUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,7 +12,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class ShoppingListViewModel(
-    private val shoppingListUseCase: ShoppingListUseCase
+    private val shoppingListUseCase: ShoppingListUseCase,
+    private val deleteProductUseCase: DeleteProductUseCase,
+    private val updateProductUseCase: UpdateProductUseCase
+
 ) : ViewModel() {
 
     private val _uiState =
@@ -43,7 +48,28 @@ class ShoppingListViewModel(
         }
     }
 
+    fun deleteProduct(id: String) {
+        viewModelScope.launch {
+            deleteProductUseCase(id)
+            loadProducts()
+        }
+    }
+
     fun refresh() {
         loadProducts()
+    }
+    fun updateProduct(id: String) {
+        viewModelScope.launch {
+
+            val result = updateProductUseCase(id)
+
+            result.onSuccess {
+                refresh()
+            }.onFailure {
+                _uiState.value = ShoppingListUiState.Error(
+                    it.message ?: "Error al actualizar producto"
+                )
+            }
+        }
     }
 }

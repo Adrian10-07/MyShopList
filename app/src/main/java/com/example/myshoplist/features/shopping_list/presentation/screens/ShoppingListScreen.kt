@@ -44,6 +44,8 @@ fun ShoppingListScreen(
     onLogout: () -> Unit = {}
 ) {
     val uiState by shoppingListViewModel.uiState.collectAsState()
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var productToDelete by remember { mutableStateOf<Product?>(null) }
 
     // Log de cambios de estado
     LaunchedEffect(uiState) {
@@ -55,6 +57,24 @@ fun ShoppingListScreen(
             })
         }
         Log.d("ShoppingListScreen", logData.toString(2))
+    }
+
+    // Dialog de confirmación para eliminar
+    if (showDeleteConfirmation && productToDelete != null) {
+        DeleteConfirmationDialog(
+            productName = productToDelete?.name ?: "",
+            onConfirm = {
+                productToDelete?.id?.let { id ->
+                    shoppingListViewModel.deleteProduct(id)
+                }
+                showDeleteConfirmation = false
+                productToDelete = null
+            },
+            onDismiss = {
+                showDeleteConfirmation = false
+                productToDelete = null
+            }
+        )
     }
 
     Scaffold(
@@ -97,12 +117,11 @@ fun ShoppingListScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // ✨ IMPORTAR EL MODAL AQUÍ - Una sola línea
             AddProductScreen(
                 viewModel = addProductViewModel,
                 onProductAdded = {
                     // Recargar la lista cuando se agrega un producto
-                    shoppingListViewModel.refresh()
+                    shoppingListViewModel.loadProducts()
                 }
             )
 
@@ -116,13 +135,22 @@ fun ShoppingListScreen(
 
                 is ShoppingListUiState.Success -> {
                     val items = (uiState as ShoppingListUiState.Success).items
-                    ProductList(items = items)
+                    ProductList(
+                        items = items,
+                        onDeleteProduct = { product ->
+                            productToDelete = product
+                            showDeleteConfirmation = true
+                        },
+                        onUpdateProduct = { product ->
+                            product.id?.let { shoppingListViewModel.updateProduct(it) }
+                        }
+                    )
                 }
 
                 is ShoppingListUiState.Error -> {
                     ErrorView(
                         message = (uiState as ShoppingListUiState.Error).message,
-                        onRetry = { shoppingListViewModel.refresh() }
+                        onRetry = { shoppingListViewModel.loadProducts() }
                     )
                 }
 
@@ -132,6 +160,48 @@ fun ShoppingListScreen(
             }
         }
     }
+}
+
+@Composable
+private fun DeleteConfirmationDialog(
+    productName: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Eliminar producto",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp
+            )
+        },
+        text = {
+            Text(
+                text = "¿Estás seguro de que deseas eliminar \"$productName\" de tu lista?",
+                fontSize = 16.sp,
+                color = Color(0xFF718096)
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFFF7043)
+                )
+            ) {
+                Text("Eliminar", color = Color.White)
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss) {
+                Text("Cancelar", color = Color(0xFF718096))
+            }
+        },
+        containerColor = Color.White,
+        shape = RoundedCornerShape(16.dp)
+    )
 }
 
 @Composable
@@ -208,15 +278,21 @@ private fun LoadingView() {
 }
 
 @Composable
-private fun ProductList(items: List<Product>) {
+private fun ProductList(
+    items: List<Product>,
+    onDeleteProduct: (Product) -> Unit = {},
+    onUpdateProduct: (Product) -> Unit = {}
+) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(items) { item ->
             ProductItemCard(
                 item = item,
-                onTogglePurchased = { /* TODO: Implementar */ },
-                onDelete = { /* TODO: Implementar */ }
+                onTogglePurchased = { onUpdateProduct(item) },
+                onDelete = {
+                    onDeleteProduct(item)
+                }
             )
         }
     }
@@ -279,11 +355,13 @@ private fun ProductItemCard(
 
             Spacer(modifier = Modifier.width(8.dp))
 
+            // Botón de eliminar funcional
             IconButton(onClick = onDelete) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Eliminar",
-                    tint = Color(0xFFCBD5E0)
+                    tint = Color(0xFFCBD5E0),
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
