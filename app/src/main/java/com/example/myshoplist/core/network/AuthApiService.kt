@@ -5,6 +5,8 @@ import com.example.myshoplist.features.add_product.data.datasource.remote.model.
 import com.example.myshoplist.features.login.data.datasource.remote.model.LoginResponse
 import com.example.myshoplist.features.login.data.datasource.remote.model.LoginRequest
 import com.example.myshoplist.features.register.data.datasource.remote.model.RegisterRequest
+import com.example.myshoplist.features.shopping_list.data.remote.model.ShoppingListDto
+import com.example.myshoplist.features.shopping_list.data.remote.model.ShoppingListRequest
 import retrofit2.Response
 import retrofit2.http.*
 interface AuthApiService {
@@ -19,4 +21,6 @@ interface AuthApiService {
         @Body request: AddProductRequest
     ): Response<AddProductResponse>
 
+    @GET("products/")
+    suspend fun getProducts(): Response<ShoppingListRequest>
 }

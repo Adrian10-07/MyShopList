@@ -4,11 +4,11 @@ import com.example.myshoplist.core.network.AuthApiService
 import com.example.myshoplist.features.add_product.data.datasource.remote.mapper.toDomain
 import com.example.myshoplist.features.add_product.data.datasource.remote.model.AddProductRequest
 import com.example.myshoplist.features.add_product.domain.entities.Product
-import com.example.myshoplist.features.add_product.domain.repository.AddProductRepository
+import com.example.myshoplist.features.add_product.domain.repository.ProductRepository
 import java.io.IOException
 
 class AddProductRepositoryImpl(
-    private val apiService: AuthApiService) : AddProductRepository {
+    private val apiService: AuthApiService) : ProductRepository {
 
     override suspend fun addProduct(
         name: String,

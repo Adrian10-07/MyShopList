@@ -1,10 +1,10 @@
 package com.example.myshoplist.features.add_product.domain.use_case
 
 import com.example.myshoplist.features.add_product.domain.entities.Product
-import com.example.myshoplist.features.add_product.domain.repository.AddProductRepository
+import com.example.myshoplist.features.add_product.domain.repository.ProductRepository
 
 class AddProductUseCase(
-    private val repository: AddProductRepository
+    private val repository: ProductRepository
 ) {
     companion object {
         val VALID_CATEGORIES = listOf(

@@ -5,7 +5,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import com.example.myshoplist.core.navigation.FeatureNavGraph
-import com.example.myshoplist.core.navigation.Home
+import com.example.myshoplist.core.navigation.ShopList
 import com.example.myshoplist.core.navigation.Login
 import com.example.myshoplist.core.navigation.Register
 import com.example.myshoplist.features.login.di.LoginModule
@@ -27,7 +27,7 @@ class LoginNavGraph(
             LoginScreen(
                 viewModel = viewModel,
                 onLoginSuccess = {
-                    navController.navigate(Home) {
+                    navController.navigate(ShopList) {
                         popUpTo(Login) {
                             inclusive = true
                         }
