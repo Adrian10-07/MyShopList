@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
             LoginNavGraph(loginModule),
             RegisterNavGraph(registerModule),
             AddProductNavGraph(addProductModule),
-            ShoppingListNavGraph(shoppingListModule)
+            ShoppingListNavGraph(shoppingListModule, addProductModule)
 
         )
 

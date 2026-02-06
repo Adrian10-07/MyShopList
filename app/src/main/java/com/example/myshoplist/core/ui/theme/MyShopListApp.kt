@@ -1,4 +1,4 @@
-package com.example.myshoplist.core
+package com.example.myshoplist.core.ui.theme
 
 import android.app.Application
 

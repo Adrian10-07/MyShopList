@@ -37,7 +37,7 @@ import androidx.compose.foundation.layout.Box
 @Composable
 fun ShoppingListScreen(
     shoppingListViewModel: ShoppingListViewModel = viewModel(),
-    addProductViewModel: AddProductViewModel = viewModel(),
+    addProductViewModel: AddProductViewModel,
     userName: String = "PapaFeliz",
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPurchases: () -> Unit = {},

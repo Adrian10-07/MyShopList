@@ -28,7 +28,7 @@ class LoginNavGraph(
                 viewModel = viewModel,
                 onLoginSuccess = {
                     navController.navigate(ShopList) {
-                        popUpTo(Login) {
+                        popUpTo(ShopList) {
                             inclusive = true
                         }
                     }
