@@ -2,7 +2,7 @@ package com.example.myshoplist.features.add_product.domain.repository
 
 import com.example.myshoplist.features.add_product.domain.entities.Product
 
-interface AddProductRepository {
+interface ProductRepository {
     suspend fun addProduct(
         name: String,
         category: String,

@@ -14,6 +14,8 @@ import com.example.myshoplist.features.login.di.LoginModule
 import com.example.myshoplist.features.register.di.RegisterModule
 import com.example.myshoplist.features.login.navigation.LoginNavGraph
 import com.example.myshoplist.features.register.navigation.RegisterNavGraph
+import com.example.myshoplist.features.shopping_list.di.ShoppingListModule
+import com.example.myshoplist.features.shopping_list.navigation.ShoppingListNavGraph
 
 class MainActivity : ComponentActivity() {
     lateinit var appContainer: AppContainer
@@ -25,12 +27,14 @@ class MainActivity : ComponentActivity() {
         val loginModule = LoginModule(appContainer)
         val registerModule = RegisterModule(appContainer)
         val addProductModule = AddProductModule(appContainer)
+        val shoppingListModule = ShoppingListModule(appContainer)
 
 
         val navGraphs = listOf(
             LoginNavGraph(loginModule),
             RegisterNavGraph(registerModule),
-            AddProductNavGraph(addProductModule)
+            AddProductNavGraph(addProductModule),
+            ShoppingListNavGraph(shoppingListModule)
 
         )
 

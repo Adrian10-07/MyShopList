@@ -9,3 +9,6 @@ object Login
 object Register
 @Serializable
 object Home
+
+@Serializable
+object AddProduct
