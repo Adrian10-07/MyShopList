@@ -1,6 +1,7 @@
 package com.example.myshoplist.features.register.presentation.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,7 +44,8 @@ import com.example.myshoplist.features.register.presentation.viewmodels.Register
 fun RegisterScreen(
     viewModel: RegisterViewModel,
     onBackClick: () -> Unit,
-    onRegisterSuccess: () -> Unit
+    onRegisterSuccess: () -> Unit,
+    onLoginClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -56,9 +58,9 @@ fun RegisterScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFC0E8DB)) // Fondo verde mint
+            .background(Color(0xFFC0E8DB))
     ) {
-        // Botón atrás en la esquina superior izquierda
+
         IconButton(
             onClick = onBackClick,
             modifier = Modifier
@@ -139,7 +141,7 @@ fun RegisterScreen(
 
                     // Label Nombre
                     Text(
-                        text = "NOMBRE",
+                        text = "Nombre de usuario",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF666666),
@@ -154,7 +156,7 @@ fun RegisterScreen(
                     TextField(
                         value = uiState.name,
                         onValueChange = { viewModel.onNameChanged(it) },
-                        placeholder = { Text("Ej. BroccoliCool") },
+                        placeholder = { Text("Almenos 2 nombres") },
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp)),
@@ -171,7 +173,7 @@ fun RegisterScreen(
 
                     // Label Correo
                     Text(
-                        text = "CORREO",
+                        text = "Correo Electronico",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF666666),
@@ -186,7 +188,7 @@ fun RegisterScreen(
                     TextField(
                         value = uiState.email,
                         onValueChange = { viewModel.onEmailChanged(it) },
-                        placeholder = { Text("hola@ejemplo.com") },
+                        placeholder = { Text("juan@ejemplo.com") },
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp)),
@@ -203,7 +205,7 @@ fun RegisterScreen(
 
                     // Label Contraseña
                     Text(
-                        text = "CONTRASEÑA",
+                        text = "Contraseña",
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF666666),
@@ -218,7 +220,7 @@ fun RegisterScreen(
                     TextField(
                         value = uiState.password,
                         onValueChange = { viewModel.onPasswordChanged(it) },
-                        placeholder = { Text("Contraseña segura") },
+                        placeholder = { Text("Almenos 8 caracteres") },
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -255,7 +257,8 @@ fun RegisterScreen(
                     Text(
                         text = "¿Ya tienes cuenta? Inicia Sesión",
                         fontSize = 12.sp,
-                        color = Color(0xFF00C853)
+                        color = Color(0xFF00C853),
+                        modifier = Modifier.clickable { onLoginClick() }
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
