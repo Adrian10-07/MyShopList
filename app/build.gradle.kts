@@ -46,7 +46,7 @@ android {
         create("dev") {
             //192.168.101.227
             dimension = "environment"
-            buildConfigField("String", "BASE_URL", "\"http://192.168.101.207:3000/api/\"")
+            buildConfigField("String", "BASE_URL", "\"http://50.19.40.173:3000/api/\"")
             resValue("string", "app_name", "MyShopList (DEV)")
         }
         create("prod") {
