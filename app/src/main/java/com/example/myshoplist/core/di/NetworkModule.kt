@@ -16,7 +16,6 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    @AuthClient
     fun provideOkHttpClient(): OkHttpClient {
         return OkHttpClient
             .Builder()
@@ -24,9 +23,9 @@ object NetworkModule {
     }
     @Provides
     @Singleton
-    @AuthClient
+    @MyShopListRetrofit
     fun provideRetrofit(
-        @AuthClient okHttpClient: OkHttpClient
+        okHttpClient: OkHttpClient
     ): Retrofit {
         return Retrofit.Builder()
             .baseUrl(BuildConfig.BASE_URL)

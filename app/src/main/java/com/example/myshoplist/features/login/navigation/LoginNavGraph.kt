@@ -1,5 +1,6 @@
 package com.example.myshoplist.features.login.navigation
 
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -9,7 +10,7 @@ import com.example.myshoplist.core.navigation.ShopList
 import com.example.myshoplist.core.navigation.Login
 import com.example.myshoplist.core.navigation.Register
 import com.example.myshoplist.features.login.presentation.screens.LoginScreen
-import com.example.myshoplist.features.login.presentation.viewmodel.LoginViewModel
+import com.example.myshoplist.features.login.presentation.viewmodels.LoginViewModel
 
 class LoginNavGraph() : FeatureNavGraph {
 
@@ -17,7 +18,7 @@ class LoginNavGraph() : FeatureNavGraph {
 
         navGraphBuilder.composable<Login> {
 
-            val viewModel: LoginViewModel = viewModel()
+            val viewModel: LoginViewModel = hiltViewModel()
 
             LoginScreen(
                 viewModel = viewModel,

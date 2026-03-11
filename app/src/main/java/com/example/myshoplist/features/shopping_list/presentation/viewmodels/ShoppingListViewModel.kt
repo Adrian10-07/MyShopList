@@ -6,12 +6,15 @@ import com.example.myshoplist.features.shopping_list.domain.use_case.DeleteProdu
 import com.example.myshoplist.features.shopping_list.domain.use_case.ShoppingListUseCase
 import com.example.myshoplist.features.shopping_list.domain.use_case.UpdateProductUseCase
 import com.example.myshoplist.features.shopping_list.presentation.screens.ShoppingListUiState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ShoppingListViewModel(
+@HiltViewModel
+class ShoppingListViewModel @Inject constructor(
     private val shoppingListUseCase: ShoppingListUseCase,
     private val deleteProductUseCase: DeleteProductUseCase,
     private val updateProductUseCase: UpdateProductUseCase

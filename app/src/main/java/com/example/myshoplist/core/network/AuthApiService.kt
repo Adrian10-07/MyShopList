@@ -21,11 +21,13 @@ interface AuthApiService {
     @POST("products/")
     suspend fun addProduct(@Body request: AddProductRequest): Response<AddProductResponse>
 
-     */
+
     @GET("products/")
     suspend fun getProducts(): Response<ShoppingListRequest>
     @DELETE("products/{id}")
     suspend fun deleteProduct(@Path("id") id: String): Response<Unit>
     @PATCH("products/{id}/toggle")
     suspend fun updateProduct(@Path("id") id: String): Response<AddProductResponse>
+
+     */
 }

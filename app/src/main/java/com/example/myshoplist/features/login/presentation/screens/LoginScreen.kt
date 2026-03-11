@@ -37,7 +37,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.myshoplist.features.login.presentation.viewmodel.LoginViewModel
+import com.example.myshoplist.features.login.presentation.viewmodels.LoginViewModel
 import kotlinx.coroutines.launch
 
 @Composable

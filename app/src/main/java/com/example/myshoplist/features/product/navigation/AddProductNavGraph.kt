@@ -1,5 +1,6 @@
 package com.example.myshoplist.features.product.navigation
 
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -13,7 +14,7 @@ import com.example.myshoplist.features.product.presentation.viewmodels.AddProduc
 class AddProductNavGraph(): FeatureNavGraph {
     override fun registerGraph(navGraphBuilder: NavGraphBuilder, navController: NavHostController) {
         navGraphBuilder.composable<AddProduct> {
-            val viewModel: AddProductViewModel = viewModel()
+            val viewModel: AddProductViewModel = hiltViewModel()
 
             AddProductScreen(
                 viewModel = viewModel,

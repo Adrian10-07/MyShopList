@@ -1,5 +1,6 @@
 package com.example.myshoplist.features.register.navigation
 
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -14,7 +15,7 @@ class RegisterNavGraph() : FeatureNavGraph {
 
     override fun registerGraph(navGraphBuilder: NavGraphBuilder, navController: NavHostController) {
         navGraphBuilder.composable<Register> {
-            val viewModel: RegisterViewModel = viewModel()
+            val viewModel: RegisterViewModel = hiltViewModel()
 
             RegisterScreen(
                 viewModel = viewModel,
