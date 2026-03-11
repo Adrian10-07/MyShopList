@@ -1,23 +1,35 @@
 package com.example.myshoplist.features.shopping_list.domain.use_case
 
+import com.example.myshoplist.core.database.dao.PurchaseLocationDao
+import com.example.myshoplist.core.database.entities.PurchaseLocationEntity
+import com.example.myshoplist.core.hardware.location.LocationClient
 import com.example.myshoplist.features.shopping_list.data.remote.model.CreatePurchaseRequest
 import com.example.myshoplist.features.shopping_list.domain.repository.ShoppingListRepository
 import javax.inject.Inject
 
 class CreatePurchaseUseCase @Inject constructor(
-    private val repository: ShoppingListRepository
+    private val apiRepository: ShoppingListRepository,
+    private val localDao: PurchaseLocationDao, // Inyectamos Room
+    private val locationClient: LocationClient // Inyectamos Hardware GPS
 ) {
     suspend operator fun invoke(request: CreatePurchaseRequest): Result<Unit> {
         return try {
-            if (request.products.isEmpty()) {
-                return Result.failure(Exception("No hay productos seleccionados para la compra"))
+            val location = locationClient.getCurrentLocation()
+
+            val apiResult = apiRepository.createPurchase(request)
+
+            apiResult.onSuccess { purchaseId ->
+                if (location != null) {
+                    val locationEntity = PurchaseLocationEntity(
+                        purchaseId = purchaseId,
+                        latitude = location.latitude,
+                        longitude = location.longitude
+                    )
+                    localDao.insertLocation(locationEntity)
+                }
             }
 
-            if (request.totalAmount <= 0) {
-                return Result.failure(Exception("El monto total debe ser mayor a cero"))
-            }
-
-            repository.createPurchase(request)
+            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
