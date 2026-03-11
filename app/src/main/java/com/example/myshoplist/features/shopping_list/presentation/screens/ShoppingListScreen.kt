@@ -26,9 +26,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.myshoplist.features.add_product.presentation.screens.AddProductScreen
-import com.example.myshoplist.features.add_product.presentation.viewmodels.AddProductViewModel
-import com.example.myshoplist.features.add_product.domain.entities.Product
+import com.example.myshoplist.features.product.presentation.screens.AddProductScreen
+import com.example.myshoplist.features.product.presentation.viewmodels.AddProductViewModel
+import com.example.myshoplist.features.product.domain.entities.Product
 import com.example.myshoplist.features.shopping_list.presentation.viewmodels.ShoppingListViewModel
 import org.json.JSONObject
 import java.text.NumberFormat

@@ -4,8 +4,8 @@ import android.content.Context
 import com.example.myshoplist.BuildConfig
 import com.example.myshoplist.core.network.AuthApiService
 import com.example.myshoplist.core.network.AuthInterceptor
-import com.example.myshoplist.features.add_product.data.repository.AddProductRepositoryImpl
-import com.example.myshoplist.features.add_product.domain.repository.ProductRepository
+import com.example.myshoplist.features.product.data.repository.AddProductRepositoryImpl
+import com.example.myshoplist.features.product.domain.repository.ProductRepository
 import com.example.myshoplist.features.login.data.repository.AuthRepositoryImpl
 import com.example.myshoplist.features.login.domain.repository.AuthRepository
 import com.example.myshoplist.features.register.data.repository.RegisterRepositoryImpl

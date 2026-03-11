@@ -6,8 +6,9 @@ import com.example.myshoplist.features.login.data.datasource.remote.mapper.toDom
 import com.example.myshoplist.features.login.data.datasource.remote.model.LoginRequest
 import com.example.myshoplist.features.login.domain.entities.AuthUser
 import com.example.myshoplist.features.login.domain.repository.AuthRepository
+import javax.inject.Inject
 
-class AuthRepositoryImpl(private val api: AuthApiService) : AuthRepository {
+class AuthRepositoryImpl @Inject constructor(private val api: AuthApiService) : AuthRepository {
     override suspend fun login(email: String, password: String): Result<AuthUser> {
         return try {
             val response = api.login(LoginRequest(email, password))
