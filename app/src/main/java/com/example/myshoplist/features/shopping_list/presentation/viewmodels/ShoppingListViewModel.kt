@@ -6,18 +6,24 @@ import com.example.myshoplist.features.shopping_list.domain.use_case.DeleteProdu
 import com.example.myshoplist.features.shopping_list.domain.use_case.ShoppingListUseCase
 import com.example.myshoplist.features.shopping_list.domain.use_case.UpdateProductUseCase
 import com.example.myshoplist.features.shopping_list.presentation.screens.ShoppingListUiState
+import com.example.myshoplist.features.shopping_list.data.remote.model.CreatePurchaseRequest
+import com.example.myshoplist.features.shopping_list.data.remote.model.PurchaseProductRequest
+import com.example.myshoplist.features.shopping_list.domain.use_case.CreatePurchaseUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 @HiltViewModel
 class ShoppingListViewModel @Inject constructor(
     private val shoppingListUseCase: ShoppingListUseCase,
     private val deleteProductUseCase: DeleteProductUseCase,
-    private val updateProductUseCase: UpdateProductUseCase
+    private val updateProductUseCase: UpdateProductUseCase,
+    private val createPurchaseUseCase: CreatePurchaseUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ShoppingListUiState>(ShoppingListUiState.Loading)
@@ -28,7 +34,6 @@ class ShoppingListViewModel @Inject constructor(
     }
 
     fun loadProducts() {
-        // No siempre es necesario mostrar Loading al refrescar, pero ayuda en la carga inicial
         viewModelScope.launch {
             val result = shoppingListUseCase()
 
@@ -37,7 +42,6 @@ class ShoppingListViewModel @Inject constructor(
                     _uiState.value = if (items.isEmpty()) {
                         ShoppingListUiState.Empty
                     } else {
-                        // Asegúrate de que ShoppingListUiState.Success reciba List<Product>
                         ShoppingListUiState.Success(items)
                     }
                 }
@@ -52,19 +56,58 @@ class ShoppingListViewModel @Inject constructor(
     fun deleteProduct(id: String) {
         viewModelScope.launch {
             deleteProductUseCase(id).onSuccess {
-                loadProducts() // Recarga la lista tras eliminar
+                loadProducts()
             }
         }
     }
 
     fun updateProduct(id: String) {
+        // Solo actualizamos el estado de la UI localmente
+        val currentState = _uiState.value
+        if (currentState is ShoppingListUiState.Success) {
+            val updatedItems = currentState.items.map {
+                if (it.id == id) {
+                    // Alternamos el estado localmente (1 o 0)
+                    it.copy(isPurchased = if (it.isPurchased == 1) 0 else 1)
+                } else {
+                    it
+                }
+            }
+            // Actualizamos el StateFlow sin llamar a loadProducts()
+            _uiState.value = ShoppingListUiState.Success(updatedItems)
+        }
+    }
+
+    fun finalizePurchase() {
+        val currentState = _uiState.value
+        if (currentState !is ShoppingListUiState.Success) return
+
+        val purchasedItems = currentState.items.filter { it.isPurchased == 1 }
+        if (purchasedItems.isEmpty()) return
+
         viewModelScope.launch {
-            val result = updateProductUseCase(id)
+            _uiState.value = ShoppingListUiState.Loading
 
-            result.onSuccess {
+            val total = purchasedItems.sumOf { it.estimatedPrice }
+            val todayDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
 
+            val request = CreatePurchaseRequest(
+                totalAmount = total,
+                purchaseDate = todayDate,
+                products = purchasedItems.map {
+                    PurchaseProductRequest(
+                        productId = it.id ?: "",
+                        productName = it.name,
+                        category = it.category,
+                        price = it.estimatedPrice
+                    )
+                }
+            )
+
+            createPurchaseUseCase(request).onSuccess {
                 loadProducts()
-            }.onFailure {
+            }.onFailure { e ->
+                _uiState.value = ShoppingListUiState.Error(e.message ?: "Error al finalizar compra")
             }
         }
     }

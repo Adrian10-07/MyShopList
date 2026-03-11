@@ -10,6 +10,7 @@ object Register
 
 @Serializable
 object ShopList
-
+@Serializable
+object PurchaseHistory
 @Serializable
 object AddProduct

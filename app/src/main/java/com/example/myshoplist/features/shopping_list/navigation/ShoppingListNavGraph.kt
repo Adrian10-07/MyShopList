@@ -6,6 +6,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import com.example.myshoplist.core.navigation.FeatureNavGraph
+import com.example.myshoplist.core.navigation.PurchaseHistory
 import com.example.myshoplist.features.shopping_list.presentation.screens.ShoppingListScreen
 import com.example.myshoplist.features.shopping_list.presentation.viewmodels.ShoppingListViewModel
 import com.example.myshoplist.features.product.presentation.viewmodels.AddProductViewModel
@@ -28,7 +29,7 @@ class ShoppingListNavGraph(): FeatureNavGraph {
                 shoppingListViewModel = shoppingListViewModel,
                 addProductViewModel = addProductViewModel,
                 userName = "Diego",
-                onNavigateToHistory = {},
+                onNavigateToHistory = {navController.navigate(PurchaseHistory)},
                 onNavigateToPurchases = {},
                 onLogout = {
                     navController.popBackStack()

@@ -50,7 +50,7 @@ fun ShoppingListScreen(
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var productToDelete by remember { mutableStateOf<Product?>(null) }
 
-    // Log de cambios de estado
+    // Log de cambios de estado (Mantenemos tu lógica de depuración)
     LaunchedEffect(uiState) {
         val logData = JSONObject().apply {
             put("timestamp", System.currentTimeMillis())
@@ -62,6 +62,7 @@ fun ShoppingListScreen(
         Log.d("ShoppingListScreen", logData.toString(2))
     }
 
+    // Diálogo de confirmación de borrado
     if (showDeleteConfirmation && productToDelete != null) {
         DeleteConfirmationDialog(
             productName = productToDelete?.name ?: "",
@@ -105,6 +106,7 @@ fun ShoppingListScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Card de Total Estimado
             when (uiState) {
                 is ShoppingListUiState.Success -> {
                     val items = (uiState as ShoppingListUiState.Success).items
@@ -118,51 +120,84 @@ fun ShoppingListScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Sección para agregar productos
             AddProductScreen(
                 viewModel = addProductViewModel,
                 onProductAdded = {
-                    // Recargar la lista cuando se agrega un producto
                     shoppingListViewModel.loadProducts()
                 }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Lista de productos
-            when (uiState) {
-                is ShoppingListUiState.Loading -> {
-                    LoadingView()
-                }
+            // Contenido Principal de la Lista
+            Box(modifier = Modifier.weight(1f)) {
+                when (uiState) {
+                    is ShoppingListUiState.Loading -> {
+                        LoadingView()
+                    }
 
-                is ShoppingListUiState.Success -> {
-                    val items = (uiState as ShoppingListUiState.Success).items
-                    ProductList(
-                        items = items,
-                        onDeleteProduct = { product ->
-                            productToDelete = product
-                            showDeleteConfirmation = true
-                        },
-                        onUpdateProduct = { product ->
-                            product.id?.let { shoppingListViewModel.updateProduct(it) }
+                    is ShoppingListUiState.Success -> {
+                        val items = (uiState as ShoppingListUiState.Success).items
+
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            // Lista Scrolleable
+                            Box(modifier = Modifier.weight(1f)) {
+                                ProductList(
+                                    items = items,
+                                    onDeleteProduct = { product ->
+                                        productToDelete = product
+                                        showDeleteConfirmation = true
+                                    },
+                                    onUpdateProduct = { product ->
+                                        product.id?.let { shoppingListViewModel.updateProduct(it) }
+                                    }
+                                )
+                            }
+
+                            val hasPurchasedItems = items.any { it.isPurchased == 1 }
+                            if (hasPurchasedItems) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Button(
+                                    onClick = { shoppingListViewModel.finalizePurchase() },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp)
+                                        .padding(bottom = 8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF4CAF50) // Color verde para indicar "completado"
+                                    ),
+                                    shape = RoundedCornerShape(16.dp),
+                                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                                ) {
+                                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Finalizar Compra",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
+                            }
                         }
-                    )
-                }
+                    }
 
-                is ShoppingListUiState.Error -> {
-                    ErrorView(
-                        message = (uiState as ShoppingListUiState.Error).message,
-                        onRetry = { shoppingListViewModel.loadProducts() }
-                    )
-                }
+                    is ShoppingListUiState.Error -> {
+                        ErrorView(
+                            message = (uiState as ShoppingListUiState.Error).message,
+                            onRetry = { shoppingListViewModel.loadProducts() }
+                        )
+                    }
 
-                is ShoppingListUiState.Empty -> {
-                    EmptyView()
+                    is ShoppingListUiState.Empty -> {
+                        EmptyView()
+                    }
                 }
             }
         }
     }
 }
-
 @Composable
 private fun DeleteConfirmationDialog(
     productName: String,

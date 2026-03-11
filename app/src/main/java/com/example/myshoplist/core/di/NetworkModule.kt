@@ -1,6 +1,7 @@
 package com.example.myshoplist.core.di
 
 import com.example.myshoplist.BuildConfig
+import com.example.myshoplist.core.network.AuthInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -14,13 +15,23 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
+    // 1. Le enseñamos a Hilt cómo crear tu interceptor
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
-        return OkHttpClient
-            .Builder()
+    fun provideAuthInterceptor(): AuthInterceptor {
+        return AuthInterceptor()
+    }
+
+    // 2. Inyectamos el interceptor en el OkHttpClient
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(authInterceptor: AuthInterceptor): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(authInterceptor) // <- Aquí recuperamos la funcionalidad
             .build()
     }
+
+    // 3. El Retrofit ya recibe el OkHttpClient configurado
     @Provides
     @Singleton
     @MyShopListRetrofit
@@ -33,6 +44,7 @@ object NetworkModule {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
+}
 /*
     @Provides
     @Singleton
@@ -40,4 +52,3 @@ object NetworkModule {
         return retrofit.create(AuthApiService::class.java)
     }
     */
-}
