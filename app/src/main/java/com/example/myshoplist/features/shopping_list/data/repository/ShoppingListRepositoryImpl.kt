@@ -4,6 +4,7 @@ import com.example.myshoplist.core.network.AuthApiService
 import com.example.myshoplist.features.product.data.datasource.remote.mapper.toDomain
 import com.example.myshoplist.features.product.domain.entities.Product
 import com.example.myshoplist.features.shopping_list.data.remote.api.ShoppingListApi
+import com.example.myshoplist.features.shopping_list.data.remote.model.CreatePurchaseRequest
 import com.example.myshoplist.features.shopping_list.data.remote.model.ShoppingListDto
 import com.example.myshoplist.features.shopping_list.domain.repository.ShoppingListRepository
 import javax.inject.Inject
@@ -59,6 +60,18 @@ class ShoppingListRepositoryImpl @Inject constructor(
                 Result.success(body.data!!.toDomain())
             } else {
                 Result.failure(Exception("No se pudo obtener el producto actualizado"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    override suspend fun createPurchase(request: CreatePurchaseRequest): Result<Unit> {
+        return try {
+            val response = apiService.createPurchase(request)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Error al registrar la compra en el servidor"))
             }
         } catch (e: Exception) {
             Result.failure(e)

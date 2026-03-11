@@ -8,6 +8,7 @@ import com.example.myshoplist.core.navigation.NavigationWrapper
 import com.example.myshoplist.core.ui.theme.MyShopListTheme
 import com.example.myshoplist.features.product.navigation.AddProductNavGraph
 import com.example.myshoplist.features.login.navigation.LoginNavGraph
+import com.example.myshoplist.features.purchase_history.navigation.PurchaseHistoryNavGraph
 import com.example.myshoplist.features.register.navigation.RegisterNavGraph
 import com.example.myshoplist.features.shopping_list.navigation.ShoppingListNavGraph
 import dagger.hilt.android.AndroidEntryPoint
@@ -23,7 +24,8 @@ class MainActivity : ComponentActivity() {
             LoginNavGraph(),
             RegisterNavGraph(),
             AddProductNavGraph(),
-            ShoppingListNavGraph()
+            ShoppingListNavGraph(),
+            PurchaseHistoryNavGraph()
         )
 
         setContent {
