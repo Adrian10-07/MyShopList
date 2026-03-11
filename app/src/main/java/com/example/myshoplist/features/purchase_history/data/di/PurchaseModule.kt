@@ -3,12 +3,13 @@ package com.example.myshoplist.features.purchase_history.data.di
 import com.example.myshoplist.features.purchase_history.data.datasource.remote.api.PurchaseApi
 import com.example.myshoplist.features.purchase_history.data.repositories.PurchaseRepositoryImpl
 import com.example.myshoplist.features.purchase_history.domain.repositories.PurchaseRepository
-import com.google.android.datatransport.runtime.dagger.Module
-import com.google.android.datatransport.runtime.dagger.Provides
-import retrofit2.Retrofit
-import javax.inject.Singleton
+import dagger.Module
+import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import retrofit2.Retrofit
+import javax.inject.Singleton
+
 
 @Module
 @InstallIn(SingletonComponent::class)
