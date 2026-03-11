@@ -4,5 +4,7 @@ data class Purchase(
     val id: String,
     val totalAmount: Double,
     val purchaseDate: String,
-    val itemCount: Int
+    val itemCount: Int,
+    val latitude: Double? = null,
+    val longitude: Double? = null
 )

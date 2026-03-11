@@ -1,6 +1,9 @@
 package com.example.myshoplist.features.shopping_list.presentation.screens
 
+import android.content.pm.PackageManager
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -35,6 +38,8 @@ import java.text.NumberFormat
 import java.util.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 
 
 @Composable
@@ -49,8 +54,14 @@ fun ShoppingListScreen(
     val uiState by shoppingListViewModel.uiState.collectAsState()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var productToDelete by remember { mutableStateOf<Product?>(null) }
+    val context = LocalContext.current
 
-    // Log de cambios de estado (Mantenemos tu lógica de depuración)
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = {
+            shoppingListViewModel.finalizePurchase()
+        }
+    )
     LaunchedEffect(uiState) {
         val logData = JSONObject().apply {
             put("timestamp", System.currentTimeMillis())
@@ -62,7 +73,6 @@ fun ShoppingListScreen(
         Log.d("ShoppingListScreen", logData.toString(2))
     }
 
-    // Diálogo de confirmación de borrado
     if (showDeleteConfirmation && productToDelete != null) {
         DeleteConfirmationDialog(
             productName = productToDelete?.name ?: "",
@@ -159,13 +169,29 @@ fun ShoppingListScreen(
                             if (hasPurchasedItems) {
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Button(
-                                    onClick = { shoppingListViewModel.finalizePurchase() },
+                                    onClick = {
+                                        val hasPermission = ContextCompat.checkSelfPermission(
+                                            context,
+                                            android.Manifest.permission.ACCESS_FINE_LOCATION
+                                        ) == PackageManager.PERMISSION_GRANTED
+
+                                        if (hasPermission) {
+                                            shoppingListViewModel.finalizePurchase()
+                                        } else {
+                                            locationPermissionLauncher.launch(
+                                                arrayOf(
+                                                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                                                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                                                )
+                                            )
+                                        }
+                                    },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(56.dp)
                                         .padding(bottom = 8.dp),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF4CAF50) // Color verde para indicar "completado"
+                                        containerColor = Color(0xFF4CAF50)
                                     ),
                                     shape = RoundedCornerShape(16.dp),
                                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)

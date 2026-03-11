@@ -91,6 +91,7 @@ dependencies {
     implementation(libs.retrofitKotlinxSerializationConverter)
 
     implementation(libs.hilt.android)
+    implementation(libs.play.services.location)
     ksp(libs.hilt.compiler)
 
     implementation(libs.androidx.hilt.navigation.compose)
@@ -104,5 +105,5 @@ dependencies {
 
     //BIOMETRIC
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
-
+    implementation("com.google.android.gms:play-services-location:21.2.0")
 }

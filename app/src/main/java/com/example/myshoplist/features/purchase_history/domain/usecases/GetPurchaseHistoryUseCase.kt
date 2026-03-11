@@ -10,8 +10,6 @@ class GetPurchaseHistoryUseCase @Inject constructor(
     suspend operator fun invoke(): Result<List<Purchase>> {
         return try {
             val purchases = repository.getPurchases()
-            // Si purchases es un Result desde el repositorio, puedes retornarlo directo.
-            // Si el repositorio retorna List<Purchase>, lo envolvemos:
             Result.success(purchases.getOrThrow())
         } catch (e: Exception) {
             Result.failure(e)
