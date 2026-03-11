@@ -2,8 +2,9 @@ package com.example.myshoplist.features.product.domain.use_case
 
 import com.example.myshoplist.features.product.domain.entities.Product
 import com.example.myshoplist.features.product.domain.repository.ProductRepository
+import javax.inject.Inject
 
-class AddProductUseCase(
+class AddProductUseCase @Inject constructor(
     private val repository: ProductRepository
 ) {
     companion object {

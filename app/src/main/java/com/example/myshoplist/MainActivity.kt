@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.myshoplist.core.navigation.NavigationWrapper
 import com.example.myshoplist.core.ui.theme.MyShopListTheme
-import com.example.myshoplist.features.product.di.AddProductModule
 import com.example.myshoplist.features.product.navigation.AddProductNavGraph
 import com.example.myshoplist.features.login.navigation.LoginNavGraph
 import com.example.myshoplist.features.register.navigation.RegisterNavGraph
@@ -24,6 +23,7 @@ class MainActivity : ComponentActivity() {
         val navGraphs = listOf(
             LoginNavGraph(),
             RegisterNavGraph(),
+            AddProductNavGraph(),
 
         )
 

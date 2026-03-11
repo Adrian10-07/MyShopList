@@ -17,9 +17,11 @@ interface AuthApiService {
     @POST("auth/register")
     suspend fun register(@Body request: RegisterRequest): Response<LoginResponse>
 
-     */
+
     @POST("products/")
     suspend fun addProduct(@Body request: AddProductRequest): Response<AddProductResponse>
+
+     */
     @GET("products/")
     suspend fun getProducts(): Response<ShoppingListRequest>
     @DELETE("products/{id}")

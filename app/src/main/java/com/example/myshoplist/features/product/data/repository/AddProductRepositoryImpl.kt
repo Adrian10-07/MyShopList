@@ -1,14 +1,15 @@
 package com.example.myshoplist.features.product.data.repository
 
-import com.example.myshoplist.core.network.AuthApiService
+import com.example.myshoplist.features.product.data.datasource.remote.api.ProductApi
 import com.example.myshoplist.features.product.data.datasource.remote.mapper.toDomain
 import com.example.myshoplist.features.product.data.datasource.remote.model.AddProductRequest
 import com.example.myshoplist.features.product.domain.entities.Product
 import com.example.myshoplist.features.product.domain.repository.ProductRepository
 import java.io.IOException
+import javax.inject.Inject
 
-class AddProductRepositoryImpl(
-    private val apiService: AuthApiService) : ProductRepository {
+class AddProductRepositoryImpl @Inject constructor(
+    private val apiService: ProductApi) : ProductRepository {
 
     override suspend fun addProduct(
         name: String,
