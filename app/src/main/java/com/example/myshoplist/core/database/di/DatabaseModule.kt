@@ -3,6 +3,7 @@ package com.example.myshoplist.core.database.di
 import android.content.Context
 import androidx.room.Room
 import com.example.myshoplist.core.database.AppDatabase
+import com.example.myshoplist.core.database.dao.PurchaseLocationDao
 import com.example.myshoplist.core.database.product.dao.ProductDao
 import dagger.Module
 import dagger.Provides
@@ -30,5 +31,10 @@ object DatabaseModule {
     @Provides
     fun provideProductDao(database: AppDatabase): ProductDao {
         return database.productDao()
+    }
+    @Provides
+    @Singleton
+    fun providePurchaseLocationDao(database: AppDatabase): PurchaseLocationDao {
+        return database.purchaseLocationDao()
     }
 }
