@@ -22,6 +22,7 @@ navigationCompose = "2.9.7"
 # Añadimos la versión para el nuevo convertidor
 retrofitKotlinxSerializationConverter = "1.0.0"
 roomKtx = "2.8.4"
+billingKtx = "8.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -51,6 +52,7 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 # Añadimos el nuevo convertidor con un alias camelCase
 retrofitKotlinxSerializationConverter = { group = "com.jakewharton.retrofit", name = "retrofit2-kotlinx-serialization-converter", version.ref = "retrofitKotlinxSerializationConverter" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
+billing-ktx = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "billingKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
