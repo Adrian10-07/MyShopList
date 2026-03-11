@@ -2,14 +2,16 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+
+    alias(libs.plugins.hilt.android)
+    alias(libs.plugins.devtools.ksp)
+
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android {
     namespace = "com.example.myshoplist"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.myshoplist"
@@ -30,21 +32,25 @@ android {
             )
         }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
+
+    // ACTUALIZADO A 21 PARA COINCIDIR CON COMPILE OPTIONS
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "21"
     }
+
     buildFeatures {
         compose = true
-        buildConfig= true
+        buildConfig = true
     }
+
     flavorDimensions.add("environment")
     productFlavors {
         create("dev") {
-            //192.168.101.227
             dimension = "environment"
             buildConfigField("String", "BASE_URL", "\"http://50.19.40.173:3000/api/\"")
             resValue("string", "app_name", "MyShopList (DEV)")
@@ -56,34 +62,43 @@ android {
         }
     }
 }
+ksp {
+    arg("hilt.disableModulesHaveInstallInCheck", "true")
+}
 
 dependencies {
+
     implementation(libs.androidx.core.ktx)
+
     implementation(libs.androidx.lifecycle.runtime.ktx)
+
     implementation(libs.androidx.activity.compose)
+
     implementation(platform(libs.androidx.compose.bom))
+
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.navigation.common.ktx)
-    implementation(libs.androidx.navigation.runtime.ktx)
-    implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.room.ktx)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.com.squareup.retrofit2.retrofit)
-    implementation(libs.retrofitKotlinxSerializationConverter)
-    implementation(libs.io.coil.kt.coil.compose)
-    implementation(libs.androidx.ui)
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("com.google.code.gson:gson:2.10.1")
-    implementation("androidx.compose.material:material-icons-extended")
 
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+    implementation(libs.androidx.navigation.compose)
+
+    implementation(libs.coil.compose)
+
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation(libs.retrofit)
+    implementation(libs.retrofitKotlinxSerializationConverter)
+
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+
+    ksp(libs.androidx.room.compiler)
+
+    implementation(libs.retrofit.gson)
 }
