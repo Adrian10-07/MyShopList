@@ -101,4 +101,8 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.retrofit.gson)
+
+    //BIOMETRIC
+    implementation("androidx.biometric:biometric:1.2.0-alpha05")
+
 }
