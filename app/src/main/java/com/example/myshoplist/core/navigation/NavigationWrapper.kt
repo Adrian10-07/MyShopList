@@ -1,21 +1,21 @@
-package com.example.myshoplist.core.navigation
+    package com.example.myshoplist.core.navigation
 
-import androidx.compose.runtime.Composable
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.rememberNavController
+    import androidx.compose.runtime.Composable
+    import androidx.navigation.compose.NavHost
+    import androidx.navigation.compose.rememberNavController
 
-@Composable
-fun NavigationWrapper(
-    navGraphs: List<FeatureNavGraph>
-) {
-    val navController = rememberNavController()
-
-    NavHost(
-        navController = navController,
-        startDestination = Login
+    @Composable
+    fun NavigationWrapper(
+        navGraphs: List<FeatureNavGraph>
     ) {
-        navGraphs.forEach { graph ->
-            graph.registerGraph(this, navController)
+        val navController = rememberNavController()
+
+        NavHost(
+            navController = navController,
+            startDestination = Login
+        ) {
+            navGraphs.forEach { graph ->
+                graph.registerGraph(this, navController)
+            }
         }
     }
-}
