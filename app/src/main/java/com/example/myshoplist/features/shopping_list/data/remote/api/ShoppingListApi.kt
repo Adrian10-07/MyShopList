@@ -1,6 +1,7 @@
 package com.example.myshoplist.features.shopping_list.data.remote.api
 
 import com.example.myshoplist.features.product.data.datasource.remote.model.AddProductResponse
+import com.example.myshoplist.features.purchase_history.data.datasource.remote.models.CreatePurchaseResponse
 import com.example.myshoplist.features.shopping_list.data.remote.model.CreatePurchaseRequest
 import com.example.myshoplist.features.shopping_list.data.remote.model.ShoppingListRequest
 import retrofit2.Response
@@ -19,5 +20,5 @@ interface ShoppingListApi {
     @PATCH("products/{id}/toggle")
     suspend fun updateProduct(@Path("id") id: String): Response<AddProductResponse>
     @POST("purchases")
-    suspend fun createPurchase(@Body request: CreatePurchaseRequest): Response<Unit>
+    suspend fun createPurchase(@Body request: CreatePurchaseRequest): Response<CreatePurchaseResponse>
 }

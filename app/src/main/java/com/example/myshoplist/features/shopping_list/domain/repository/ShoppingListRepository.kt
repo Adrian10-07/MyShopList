@@ -9,5 +9,5 @@ interface ShoppingListRepository {
     suspend fun deleteProduct(id: String): Result<Unit>
     suspend fun updateProduct(id: String): Result<Product>
 
-    suspend fun createPurchase(request: CreatePurchaseRequest): Result<Unit>
+    suspend fun createPurchase(request: CreatePurchaseRequest): Result<String>
 }

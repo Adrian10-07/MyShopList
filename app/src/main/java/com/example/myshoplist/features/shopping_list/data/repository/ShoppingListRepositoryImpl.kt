@@ -65,11 +65,12 @@ class ShoppingListRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
-    override suspend fun createPurchase(request: CreatePurchaseRequest): Result<Unit> {
+    override suspend fun createPurchase(request: CreatePurchaseRequest): Result<String> {
         return try {
             val response = apiService.createPurchase(request)
-            if (response.isSuccessful) {
-                Result.success(Unit)
+            if (response.isSuccessful && response.body()?.success == true) {
+                val purchaseId = response.body()!!.data.id
+                Result.success(purchaseId)
             } else {
                 Result.failure(Exception("Error al registrar la compra en el servidor"))
             }

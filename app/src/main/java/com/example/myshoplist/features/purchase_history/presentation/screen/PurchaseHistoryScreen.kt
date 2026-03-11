@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
@@ -34,11 +35,11 @@ fun PurchaseHistoryScreen(
             .background(Color(0xFFFAFAFA))
             .systemBarsPadding()
     ) {
-        // Top Bar similar a tu dashboard
+        // Top Bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF4CAF50)) // Color sugerido para listas de compras
+                .background(Color(0xFF4CAF50))
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -49,22 +50,32 @@ fun PurchaseHistoryScreen(
                 shape = RoundedCornerShape(8.dp),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
             ) {
-                Icon(Icons.Default.Person, contentDescription = "Perfil", modifier = Modifier.size(18.dp), tint = Color.White)
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Perfil",
+                    modifier = Modifier.size(18.dp),
+                    tint = Color.White
+                )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Adrian", color = Color.White, fontSize = 14.sp)
             }
 
             IconButton(onClick = { viewModel.loadPurchaseHistory() }) {
-                Icon(Icons.Default.Refresh, contentDescription = "Actualizar", tint = Color.White)
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Actualizar",
+                    tint = Color.White
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Manejo de Estados
         when {
             uiState.isLoading -> {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = Color(0xFF4CAF50))
                 }
             }
             uiState.error != null -> {
@@ -91,19 +102,21 @@ fun PurchaseHistoryScreen(
                             shape = RoundedCornerShape(16.dp)
                         ) {
                             Column(modifier = Modifier.padding(20.dp)) {
+
+                                // 1. Fila Superior: Fecha y Cantidad
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Fecha: ${purchase.purchaseDate.take(10)}", // Muestra YYYY-MM-DD
+                                        text = "Fecha: ${purchase.purchaseDate.take(10)}",
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.Black
                                     )
                                     Surface(
-                                        color = Color(0xFFE0E0E0),
+                                        color = Color(0xFFF5F5F5),
                                         shape = RoundedCornerShape(16.dp)
                                     ) {
                                         Text(
@@ -120,6 +133,29 @@ fun PurchaseHistoryScreen(
                                 HorizontalDivider(color = Color.LightGray, thickness = 1.dp)
                                 Spacer(modifier = Modifier.height(16.dp))
 
+                                // 2. Fila del Medio: Ubicación (Hardware)
+                                if (purchase.latitude != null && purchase.longitude != null) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(bottom = 12.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.LocationOn,
+                                            contentDescription = "Ubicación de la compra",
+                                            tint = Color(0xFFE53935), // Rojo característico de mapa
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "Lat: ${String.format("%.4f", purchase.latitude)}, Lon: ${String.format("%.4f", purchase.longitude)}",
+                                            fontSize = 14.sp,
+                                            color = Color.DarkGray,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
+                                }
+
+                                // 3. Fila Inferior: Total
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.End,
