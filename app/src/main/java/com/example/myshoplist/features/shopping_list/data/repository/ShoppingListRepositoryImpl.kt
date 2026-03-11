@@ -1,13 +1,15 @@
 package com.example.myshoplist.features.shopping_list.data.repository
 
 import com.example.myshoplist.core.network.AuthApiService
-import com.example.myshoplist.features.add_product.data.datasource.remote.mapper.toDomain
-import com.example.myshoplist.features.add_product.domain.entities.Product
+import com.example.myshoplist.features.product.data.datasource.remote.mapper.toDomain
+import com.example.myshoplist.features.product.domain.entities.Product
+import com.example.myshoplist.features.shopping_list.data.remote.api.ShoppingListApi
 import com.example.myshoplist.features.shopping_list.data.remote.model.ShoppingListDto
 import com.example.myshoplist.features.shopping_list.domain.repository.ShoppingListRepository
+import javax.inject.Inject
 
-class ShoppingListRepositoryImpl(
-    private val apiService: AuthApiService
+class ShoppingListRepositoryImpl @Inject constructor(
+    private val apiService: ShoppingListApi
 ) : ShoppingListRepository {
 
     override suspend fun getProducts(): Result<List<ShoppingListDto>> {
