@@ -1,6 +1,5 @@
 package com.example.myshoplist.features.shopping_list.data.repository
 
-import com.example.myshoplist.core.network.AuthApiService
 import com.example.myshoplist.features.product.data.datasource.remote.mapper.toDomain
 import com.example.myshoplist.features.product.domain.entities.Product
 import com.example.myshoplist.features.shopping_list.data.remote.api.ShoppingListApi
