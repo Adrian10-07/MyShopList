@@ -1,6 +1,5 @@
 package com.example.myshoplist.features.shopping_list.di
 
-import com.example.myshoplist.core.di.AppContainer
 import com.example.myshoplist.features.shopping_list.domain.use_case.DeleteProductUseCase
 import com.example.myshoplist.features.shopping_list.domain.use_case.ShoppingListUseCase
 import com.example.myshoplist.features.shopping_list.domain.use_case.UpdateProductUseCase

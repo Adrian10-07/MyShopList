@@ -1,14 +1,14 @@
 package com.example.myshoplist.features.login.data.repository
 
-import com.example.myshoplist.core.network.AuthApiService
 import com.example.myshoplist.core.session.SessionManager
+import com.example.myshoplist.features.login.data.datasource.remote.api.LoginApi
 import com.example.myshoplist.features.login.data.datasource.remote.mapper.toDomain
 import com.example.myshoplist.features.login.data.datasource.remote.model.LoginRequest
 import com.example.myshoplist.features.login.domain.entities.AuthUser
 import com.example.myshoplist.features.login.domain.repository.AuthRepository
 import javax.inject.Inject
 
-class AuthRepositoryImpl @Inject constructor(private val api: AuthApiService) : AuthRepository {
+class AuthRepositoryImpl @Inject constructor(private val api: LoginApi) : AuthRepository {
     override suspend fun login(email: String, password: String): Result<AuthUser> {
         return try {
             val response = api.login(LoginRequest(email, password))

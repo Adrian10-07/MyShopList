@@ -8,21 +8,16 @@ import com.example.myshoplist.core.navigation.FeatureNavGraph
 import com.example.myshoplist.core.navigation.ShopList
 import com.example.myshoplist.core.navigation.Login
 import com.example.myshoplist.core.navigation.Register
-import com.example.myshoplist.features.login.di.LoginModule
 import com.example.myshoplist.features.login.presentation.screens.LoginScreen
 import com.example.myshoplist.features.login.presentation.viewmodel.LoginViewModel
 
-class LoginNavGraph(
-    private val loginModule: LoginModule
-) : FeatureNavGraph {
+class LoginNavGraph() : FeatureNavGraph {
 
     override fun registerGraph(navGraphBuilder: NavGraphBuilder, navController: NavHostController) {
 
         navGraphBuilder.composable<Login> {
 
-            val viewModel: LoginViewModel = viewModel(
-                factory = loginModule.provideLoginViewModelFactory()
-            )
+            val viewModel: LoginViewModel = viewModel()
 
             LoginScreen(
                 viewModel = viewModel,

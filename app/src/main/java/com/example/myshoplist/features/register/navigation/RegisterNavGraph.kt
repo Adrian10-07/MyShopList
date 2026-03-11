@@ -7,19 +7,14 @@ import androidx.navigation.compose.composable
 import com.example.myshoplist.core.navigation.FeatureNavGraph
 import com.example.myshoplist.core.navigation.Login
 import com.example.myshoplist.core.navigation.Register
-import com.example.myshoplist.features.register.di.RegisterModule
 import com.example.myshoplist.features.register.presentation.screens.RegisterScreen
 import com.example.myshoplist.features.register.presentation.viewmodels.RegisterViewModel
 
-class RegisterNavGraph(
-    private val registerModule: RegisterModule
-) : FeatureNavGraph {
+class RegisterNavGraph() : FeatureNavGraph {
 
     override fun registerGraph(navGraphBuilder: NavGraphBuilder, navController: NavHostController) {
         navGraphBuilder.composable<Register> {
-            val viewModel: RegisterViewModel = viewModel(
-                factory = registerModule.provideRegisterViewModelFactory()
-            )
+            val viewModel: RegisterViewModel = viewModel()
 
             RegisterScreen(
                 viewModel = viewModel,

@@ -1,6 +1,5 @@
 package com.example.myshoplist.features.product.di
 
-import com.example.myshoplist.core.di.AppContainer
 import com.example.myshoplist.features.product.domain.use_case.AddProductUseCase
 import com.example.myshoplist.features.product.presentation.viewmodels.AddProductViewModelFactory
 

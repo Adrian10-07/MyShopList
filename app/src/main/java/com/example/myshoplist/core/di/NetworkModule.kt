@@ -1,7 +1,6 @@
 package com.example.myshoplist.core.di
 
 import com.example.myshoplist.BuildConfig
-import com.example.myshoplist.core.network.AuthApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,11 +34,11 @@ object NetworkModule {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
-
+/*
     @Provides
     @Singleton
     fun provideAuthApiService(@AuthClient retrofit: Retrofit): AuthApiService {
         return retrofit.create(AuthApiService::class.java)
     }
-
+    */
 }
