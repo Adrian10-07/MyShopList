@@ -1,6 +1,7 @@
 package com.example.myshoplist.features.shopping_list.data.repository
 
 import com.example.myshoplist.core.database.product.dao.ProductDao
+import com.example.myshoplist.core.sync.SyncScheduler
 import com.example.myshoplist.features.product.data.datasource.local.mapper.toDomain
 import com.example.myshoplist.features.product.data.datasource.local.mapper.toEntity
 import com.example.myshoplist.features.product.domain.entities.Product
@@ -13,95 +14,78 @@ import javax.inject.Inject
 
 class ShoppingListRepositoryImpl @Inject constructor(
     private val apiService: ShoppingListApi,
-    private val productDao: ProductDao,         // ← nuevo
+    private val productDao: ProductDao,
+    private val syncScheduler: SyncScheduler,
 ) : ShoppingListRepository {
 
-    // ------------------------------------------------------------------ //
-    //  GET — API primero, Room como fallback                               //
-    // ------------------------------------------------------------------ //
+    // ── GET ────────────────────────────────────────────────────────────── //
 
     override suspend fun getProducts(): Result<List<Product>> {
         return try {
             val response = apiService.getProducts()
 
             if (response.isSuccessful && response.body()?.success == true) {
-                val products = response.body()!!.data.toDomain()
-
+                val remote = response.body()!!.data.toDomain()
                 // Refresca Room con los datos del servidor
-                products.forEach { product ->
-                    productDao.insertProduct(product.toEntity())
-                }
-
-                Result.success(products)
+                remote.forEach { productDao.insertProduct(it.toEntity()) }
+                Result.success(remote)
             } else {
-                // API respondió pero con error → lee Room
-                val local = productDao.getProductsOnce().map { it.toDomain() }
-                Result.success(local)
+                Result.success(productDao.getProductsOnce().map { it.toDomain() })
             }
 
         } catch (e: IOException) {
             // Sin internet → sirve desde Room
-            val local = productDao.getProductsOnce().map { it.toDomain() }
-            Result.success(local)
-
+            Result.success(productDao.getProductsOnce().map { it.toDomain() })
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    // ------------------------------------------------------------------ //
-    //  DELETE — API primero, Room como fallback                            //
-    // ------------------------------------------------------------------ //
+    // ── DELETE ─────────────────────────────────────────────────────────── //
 
     override suspend fun deleteProduct(id: String): Result<Unit> {
         return try {
             val response = apiService.deleteProduct(id)
 
             if (response.isSuccessful) {
-                productDao.deleteProduct(id)
+                productDao.deleteProduct(id)        // borra físicamente
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("Error al eliminar: ${response.code()}"))
             }
 
         } catch (e: IOException) {
-            // Sin internet → elimina solo en Room
-            productDao.deleteProduct(id)
+            productDao.markForDeletion(id)
+            syncScheduler.schedule()
             Result.success(Unit)
-
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    // ------------------------------------------------------------------ //
-    //  TOGGLE — API primero, Room como fallback                            //
-    // ------------------------------------------------------------------ //
+    // ── TOGGLE ─────────────────────────────────────────────────────────── //
 
     override suspend fun updateProduct(id: String): Result<Unit> {
         return try {
             val response = apiService.updateProduct(id)
 
             if (response.isSuccessful) {
-                productDao.toggleIsPurchased(id)
+                productDao.toggleIsPurchased(id, pending = false)
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("Error al actualizar: ${response.code()}"))
             }
 
         } catch (e: IOException) {
-            // Sin internet → alterna en Room localmente
-            productDao.toggleIsPurchased(id)
+            productDao.toggleIsPurchased(id, pending = true)
+            syncScheduler.schedule()
             Result.success(Unit)
-
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    // ------------------------------------------------------------------ //
-    //  CREATE PURCHASE — solo API (requiere conexión)                      //
-    // ------------------------------------------------------------------ //
+    // ── CREATE PURCHASE ────────────────────────────────────────────────── //
 
     override suspend fun createPurchase(request: CreatePurchaseRequest): Result<String> {
         return try {
@@ -109,7 +93,7 @@ class ShoppingListRepositoryImpl @Inject constructor(
             if (response.isSuccessful && response.body()?.success == true) {
                 Result.success(response.body()!!.data.id)
             } else {
-                Result.failure(Exception("Error al registrar la compra en el servidor"))
+                Result.failure(Exception("Error al registrar la compra"))
             }
         } catch (e: Exception) {
             Result.failure(e)
