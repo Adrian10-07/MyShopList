@@ -1,75 +1,113 @@
 package com.example.myshoplist.features.shopping_list.data.repository
 
-import com.example.myshoplist.features.product.data.datasource.remote.mapper.toDomain
+import com.example.myshoplist.core.database.product.dao.ProductDao
+import com.example.myshoplist.features.product.data.datasource.local.mapper.toDomain
+import com.example.myshoplist.features.product.data.datasource.local.mapper.toEntity
 import com.example.myshoplist.features.product.domain.entities.Product
 import com.example.myshoplist.features.shopping_list.data.remote.api.ShoppingListApi
+import com.example.myshoplist.features.shopping_list.data.remote.mapper.toDomain
 import com.example.myshoplist.features.shopping_list.data.remote.model.CreatePurchaseRequest
-import com.example.myshoplist.features.shopping_list.data.remote.model.ShoppingListDto
 import com.example.myshoplist.features.shopping_list.domain.repository.ShoppingListRepository
+import java.io.IOException
 import javax.inject.Inject
 
 class ShoppingListRepositoryImpl @Inject constructor(
-    private val apiService: ShoppingListApi
+    private val apiService: ShoppingListApi,
+    private val productDao: ProductDao,         // ← nuevo
 ) : ShoppingListRepository {
 
-    override suspend fun getProducts(): Result<List<ShoppingListDto>> {
+    // ------------------------------------------------------------------ //
+    //  GET — API primero, Room como fallback                               //
+    // ------------------------------------------------------------------ //
+
+    override suspend fun getProducts(): Result<List<Product>> {
         return try {
             val response = apiService.getProducts()
 
-            if (response.isSuccessful) {
-                val body = response.body()
+            if (response.isSuccessful && response.body()?.success == true) {
+                val products = response.body()!!.data.toDomain()
 
-                if (body != null && body.success) {
-                    Result.success(body.data)
-                } else {
-                    Result.failure(
-                        Exception("Respuesta inválida del servidor")
-                    )
+                // Refresca Room con los datos del servidor
+                products.forEach { product ->
+                    productDao.insertProduct(product.toEntity())
                 }
+
+                Result.success(products)
             } else {
-                Result.failure(
-                    Exception("Error HTTP ${response.code()}")
-                )
+                // API respondió pero con error → lee Room
+                val local = productDao.getProductsOnce().map { it.toDomain() }
+                Result.success(local)
             }
+
+        } catch (e: IOException) {
+            // Sin internet → sirve desde Room
+            val local = productDao.getProductsOnce().map { it.toDomain() }
+            Result.success(local)
 
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
+
+    // ------------------------------------------------------------------ //
+    //  DELETE — API primero, Room como fallback                            //
+    // ------------------------------------------------------------------ //
+
     override suspend fun deleteProduct(id: String): Result<Unit> {
         return try {
             val response = apiService.deleteProduct(id)
 
             if (response.isSuccessful) {
+                productDao.deleteProduct(id)
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Error al eliminar producto"))
+                Result.failure(Exception("Error al eliminar: ${response.code()}"))
             }
+
+        } catch (e: IOException) {
+            // Sin internet → elimina solo en Room
+            productDao.deleteProduct(id)
+            Result.success(Unit)
 
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
-    override suspend fun updateProduct(id: String): Result<Product> {
+
+    // ------------------------------------------------------------------ //
+    //  TOGGLE — API primero, Room como fallback                            //
+    // ------------------------------------------------------------------ //
+
+    override suspend fun updateProduct(id: String): Result<Unit> {
         return try {
             val response = apiService.updateProduct(id)
-            val body = response.body()
 
-            if (response.isSuccessful && body?.data != null) {
-                Result.success(body.data!!.toDomain())
+            if (response.isSuccessful) {
+                productDao.toggleIsPurchased(id)
+                Result.success(Unit)
             } else {
-                Result.failure(Exception("No se pudo obtener el producto actualizado"))
+                Result.failure(Exception("Error al actualizar: ${response.code()}"))
             }
+
+        } catch (e: IOException) {
+            // Sin internet → alterna en Room localmente
+            productDao.toggleIsPurchased(id)
+            Result.success(Unit)
+
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
+
+    // ------------------------------------------------------------------ //
+    //  CREATE PURCHASE — solo API (requiere conexión)                      //
+    // ------------------------------------------------------------------ //
+
     override suspend fun createPurchase(request: CreatePurchaseRequest): Result<String> {
         return try {
             val response = apiService.createPurchase(request)
             if (response.isSuccessful && response.body()?.success == true) {
-                val purchaseId = response.body()!!.data.id
-                Result.success(purchaseId)
+                Result.success(response.body()!!.data.id)
             } else {
                 Result.failure(Exception("Error al registrar la compra en el servidor"))
             }

@@ -16,7 +16,17 @@ interface ProductDao {
     @Query("SELECT * FROM products ORDER BY createdAt DESC")
     fun getProducts(): Flow<List<ProductEntity>>
 
+    @Query("SELECT * FROM products ORDER BY createdAt DESC")
+    suspend fun getProductsOnce(): List<ProductEntity>
+
     @Query("DELETE FROM products WHERE id = :id")
     suspend fun deleteProduct(id: String)
 
+    /** Alterna isPurchased (0→1 ó 1→0) directamente en Room. */
+    @Query("""
+        UPDATE products
+        SET isPurchased = CASE WHEN isPurchased = 0 THEN 1 ELSE 0 END
+        WHERE id = :id
+    """)
+    suspend fun toggleIsPurchased(id: String)
 }
