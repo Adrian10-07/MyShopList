@@ -9,12 +9,10 @@ import com.example.myshoplist.core.database.PurchaseHistory.entities.PurchaseLoc
 
 @Database(
     entities = [ProductEntity::class, PurchaseLocationEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
-
     abstract fun productDao(): ProductDao
     abstract fun purchaseLocationDao(): PurchaseLocationDao
-
 }

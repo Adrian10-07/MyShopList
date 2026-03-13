@@ -18,23 +18,16 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideDatabase(
-        @ApplicationContext context: Context
-    ): AppDatabase {
-        return Room.databaseBuilder(
-            context,
-            AppDatabase::class.java,
-            "myshoplist_db"
-        ).build()
-    }
+    fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
+        Room.databaseBuilder(context, AppDatabase::class.java, "myshoplist_db")
+            .addMigrations(MIGRATION_1_2)
+            .build()
 
     @Provides
-    fun provideProductDao(database: AppDatabase): ProductDao {
-        return database.productDao()
-    }
+    fun provideProductDao(db: AppDatabase): ProductDao = db.productDao()
+
     @Provides
     @Singleton
-    fun providePurchaseLocationDao(database: AppDatabase): PurchaseLocationDao {
-        return database.purchaseLocationDao()
-    }
+    fun providePurchaseLocationDao(db: AppDatabase): PurchaseLocationDao =
+        db.purchaseLocationDao()
 }
