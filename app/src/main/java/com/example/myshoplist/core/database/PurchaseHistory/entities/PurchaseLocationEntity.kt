@@ -1,4 +1,4 @@
-package com.example.myshoplist.core.database.entities
+package com.example.myshoplist.core.database.PurchaseHistory.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

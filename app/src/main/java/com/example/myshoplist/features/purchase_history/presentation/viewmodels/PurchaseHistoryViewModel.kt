@@ -2,7 +2,7 @@ package com.tuspaquetes.features.purchase_history.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.myshoplist.core.database.dao.PurchaseLocationDao
+import com.example.myshoplist.core.database.PurchaseHistory.dao.PurchaseLocationDao
 import com.tuspaquetes.features.purchase_history.domain.usecases.GetPurchaseHistoryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
