@@ -1,7 +1,6 @@
 package com.example.myshoplist.features.shopping_list.data.remote.mapper
 
-import com.example.myshoplist.features.add_product.data.datasource.remote.mapper.toDomain
-import com.example.myshoplist.features.add_product.domain.entities.Product
+import com.example.myshoplist.features.product.domain.entities.Product
 import com.example.myshoplist.features.shopping_list.data.remote.model.ShoppingListDto
 
 fun ShoppingListDto.toDomain(): Product {

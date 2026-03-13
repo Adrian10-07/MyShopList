@@ -91,6 +91,8 @@ dependencies {
     implementation(libs.retrofitKotlinxSerializationConverter)
 
     implementation(libs.hilt.android)
+    implementation(libs.play.services.location)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
     ksp(libs.hilt.compiler)
 
     implementation(libs.androidx.hilt.navigation.compose)
@@ -101,4 +103,13 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.retrofit.gson)
+
+    //BIOMETRIC
+    implementation("androidx.biometric:biometric:1.2.0-alpha05")
+    implementation("com.google.android.gms:play-services-location:21.2.0")
+
+    //ROOM SYNC
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
 }

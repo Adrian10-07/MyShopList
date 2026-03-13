@@ -1,6 +1,9 @@
 package com.example.myshoplist.features.shopping_list.presentation.screens
 
+import android.content.pm.PackageManager
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -26,15 +29,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.myshoplist.features.add_product.presentation.screens.AddProductScreen
-import com.example.myshoplist.features.add_product.presentation.viewmodels.AddProductViewModel
-import com.example.myshoplist.features.add_product.domain.entities.Product
+import com.example.myshoplist.features.product.presentation.screens.AddProductScreen
+import com.example.myshoplist.features.product.presentation.viewmodels.AddProductViewModel
+import com.example.myshoplist.features.product.domain.entities.Product
 import com.example.myshoplist.features.shopping_list.presentation.viewmodels.ShoppingListViewModel
 import org.json.JSONObject
 import java.text.NumberFormat
 import java.util.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 
 
 @Composable
@@ -44,13 +50,20 @@ fun ShoppingListScreen(
     userName: String = "PapaFeliz",
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPurchases: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     val uiState by shoppingListViewModel.uiState.collectAsState()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var productToDelete by remember { mutableStateOf<Product?>(null) }
+    val context = LocalContext.current
 
-    // Log de cambios de estado
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions(),
+        onResult = {
+            shoppingListViewModel.finalizePurchase()
+        }
+    )
     LaunchedEffect(uiState) {
         val logData = JSONObject().apply {
             put("timestamp", System.currentTimeMillis())
@@ -100,11 +113,13 @@ fun ShoppingListScreen(
             // Header
             HeaderSection(
                 userName = userName,
-                onLogout = onLogout
+                onLogout = onLogout,
+                onNavigateToProfile = onNavigateToProfile
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Card de Total Estimado
             when (uiState) {
                 is ShoppingListUiState.Success -> {
                     val items = (uiState as ShoppingListUiState.Success).items
@@ -118,51 +133,100 @@ fun ShoppingListScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Sección para agregar productos
             AddProductScreen(
                 viewModel = addProductViewModel,
                 onProductAdded = {
-                    // Recargar la lista cuando se agrega un producto
                     shoppingListViewModel.loadProducts()
                 }
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Lista de productos
-            when (uiState) {
-                is ShoppingListUiState.Loading -> {
-                    LoadingView()
-                }
+            // Contenido Principal de la Lista
+            Box(modifier = Modifier.weight(1f)) {
+                when (uiState) {
+                    is ShoppingListUiState.Loading -> {
+                        LoadingView()
+                    }
 
-                is ShoppingListUiState.Success -> {
-                    val items = (uiState as ShoppingListUiState.Success).items
-                    ProductList(
-                        items = items,
-                        onDeleteProduct = { product ->
-                            productToDelete = product
-                            showDeleteConfirmation = true
-                        },
-                        onUpdateProduct = { product ->
-                            product.id?.let { shoppingListViewModel.updateProduct(it) }
+                    is ShoppingListUiState.Success -> {
+                        val items = (uiState as ShoppingListUiState.Success).items
+
+                        Column(modifier = Modifier.fillMaxSize()) {
+                            // Lista Scrolleable
+                            Box(modifier = Modifier.weight(1f)) {
+                                ProductList(
+                                    items = items,
+                                    onDeleteProduct = { product ->
+                                        productToDelete = product
+                                        showDeleteConfirmation = true
+                                    },
+                                    onUpdateProduct = { product ->
+                                        product.id?.let { shoppingListViewModel.updateProduct(it) }
+                                    }
+                                )
+                            }
+
+                            val hasPurchasedItems = items.any { it.isPurchased == 1 }
+                            if (hasPurchasedItems) {
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Button(
+                                    onClick = {
+                                        val hasPermission = ContextCompat.checkSelfPermission(
+                                            context,
+                                            android.Manifest.permission.ACCESS_FINE_LOCATION
+                                        ) == PackageManager.PERMISSION_GRANTED
+
+                                        if (hasPermission) {
+                                            shoppingListViewModel.finalizePurchase()
+                                        } else {
+                                            locationPermissionLauncher.launch(
+                                                arrayOf(
+                                                    android.Manifest.permission.ACCESS_FINE_LOCATION,
+                                                    android.Manifest.permission.ACCESS_COARSE_LOCATION
+                                                )
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp)
+                                        .padding(bottom = 8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF4CAF50)
+                                    ),
+                                    shape = RoundedCornerShape(16.dp),
+                                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                                ) {
+                                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Finalizar Compra",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
+                                }
+                            }
                         }
-                    )
-                }
+                    }
 
-                is ShoppingListUiState.Error -> {
-                    ErrorView(
-                        message = (uiState as ShoppingListUiState.Error).message,
-                        onRetry = { shoppingListViewModel.loadProducts() }
-                    )
-                }
+                    is ShoppingListUiState.Error -> {
+                        ErrorView(
+                            message = (uiState as ShoppingListUiState.Error).message,
+                            onRetry = { shoppingListViewModel.loadProducts() }
+                        )
+                    }
 
-                is ShoppingListUiState.Empty -> {
-                    EmptyView()
+                    is ShoppingListUiState.Empty -> {
+                        EmptyView()
+                    }
                 }
             }
         }
     }
 }
-
 @Composable
 private fun DeleteConfirmationDialog(
     productName: String,
@@ -208,6 +272,7 @@ private fun DeleteConfirmationDialog(
 @Composable
 private fun HeaderSection(
     userName: String,
+    onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
     Row(
@@ -229,12 +294,25 @@ private fun HeaderSection(
             )
         }
 
-        Text(
-            text = "CERRAR SESIÓN",
-            fontSize = 12.sp,
-            color = Color(0xFF718096),
-            modifier = Modifier.clickable { onLogout() }
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onNavigateToProfile) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Ir al Perfil",
+                    tint = Color(0xFF718096),
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(
+                text = "CERRAR SESIÓN",
+                fontSize = 12.sp,
+                color = Color(0xFF718096),
+                modifier = Modifier.clickable { onLogout() }
+            )
+        }
     }
 }
 
@@ -431,6 +509,7 @@ private fun BottomNavigationBar(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .windowInsetsPadding(NavigationBarDefaults.windowInsets)
             .padding(horizontal = 24.dp, vertical = 16.dp),
         shape = RoundedCornerShape(28.dp),
         color = Color(0xFF2D3748),

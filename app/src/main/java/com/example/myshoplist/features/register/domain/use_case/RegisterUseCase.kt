@@ -2,8 +2,9 @@ package com.example.myshoplist.features.register.domain.use_case
 
 import com.example.myshoplist.features.login.domain.entities.AuthUser
 import com.example.myshoplist.features.register.domain.repository.RegisterRepository
+import javax.inject.Inject
 
-class RegisterUseCase(private val repository: RegisterRepository) {
+class RegisterUseCase @Inject constructor(private val repository: RegisterRepository) {
     suspend operator fun invoke(name: String, email: String, password: String): Result<AuthUser> {
         if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
             return Result.failure(IllegalArgumentException("Campos vacíos"))
