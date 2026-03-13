@@ -11,6 +11,10 @@ import com.example.myshoplist.features.shopping_list.presentation.screens.Shoppi
 import com.example.myshoplist.features.shopping_list.presentation.viewmodels.ShoppingListViewModel
 import com.example.myshoplist.features.product.presentation.viewmodels.AddProductViewModel
 import com.example.myshoplist.core.navigation.ShopList
+import com.example.myshoplist.features.profile.presentation.screen.ProfileScreen
+import com.example.myshoplist.core.navigation.Profile
+import com.example.myshoplist.features.profile.presentation.viewmodels.ProfileViewModel
+
 
 class ShoppingListNavGraph(): FeatureNavGraph {
 
@@ -22,8 +26,8 @@ class ShoppingListNavGraph(): FeatureNavGraph {
         navGraphBuilder.composable<ShopList> {
 
             val shoppingListViewModel: ShoppingListViewModel = hiltViewModel()
-
             val addProductViewModel: AddProductViewModel = hiltViewModel()
+
 
             ShoppingListScreen(
                 shoppingListViewModel = shoppingListViewModel,
@@ -31,6 +35,7 @@ class ShoppingListNavGraph(): FeatureNavGraph {
                 userName = "Diego",
                 onNavigateToHistory = {navController.navigate(PurchaseHistory)},
                 onNavigateToPurchases = {},
+                onNavigateToProfile = {navController.navigate(Profile)},
                 onLogout = {
                     navController.popBackStack()
                 }

@@ -63,7 +63,6 @@ class ShoppingListViewModel @Inject constructor(
 
     fun updateProduct(id: String) {
         viewModelScope.launch {
-            // 1. Optimistic update en la UI (respuesta inmediata al usuario)
             val currentState = _uiState.value
             if (currentState is ShoppingListUiState.Success) {
                 val optimisticItems = currentState.items.map {
@@ -73,11 +72,9 @@ class ShoppingListViewModel @Inject constructor(
                 _uiState.value = ShoppingListUiState.Success(optimisticItems)
             }
 
-            // 2. Persiste en Room (y API si hay internet)
-            updateProductUseCase(id).onFailure {
-                // Si falla, revierte el toggle en la UI
-                loadProducts()
-            }
+            //updateProductUseCase(id).onFailure {
+                //loadProducts()
+            //}
         }
     }
 
@@ -106,7 +103,7 @@ class ShoppingListViewModel @Inject constructor(
                     )
                 }
             )
-
+            android.util.Log.d("PayloadDebug", "Enviando a Node.js: ${request.products.map { it.productName }}")
             createPurchaseUseCase(request)
                 .onSuccess { loadProducts() }
                 .onFailure { e ->

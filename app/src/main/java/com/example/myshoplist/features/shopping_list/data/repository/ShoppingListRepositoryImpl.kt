@@ -18,7 +18,6 @@ class ShoppingListRepositoryImpl @Inject constructor(
     private val syncScheduler: SyncScheduler,
 ) : ShoppingListRepository {
 
-    // ── GET ────────────────────────────────────────────────────────────── //
 
     override suspend fun getProducts(): Result<List<Product>> {
         return try {
@@ -41,7 +40,6 @@ class ShoppingListRepositoryImpl @Inject constructor(
         }
     }
 
-    // ── DELETE ─────────────────────────────────────────────────────────── //
 
     override suspend fun deleteProduct(id: String): Result<Unit> {
         return try {
@@ -63,7 +61,6 @@ class ShoppingListRepositoryImpl @Inject constructor(
         }
     }
 
-    // ── TOGGLE ─────────────────────────────────────────────────────────── //
 
     override suspend fun updateProduct(id: String): Result<Unit> {
         return try {
@@ -85,16 +82,15 @@ class ShoppingListRepositoryImpl @Inject constructor(
         }
     }
 
-    // ── CREATE PURCHASE ────────────────────────────────────────────────── //
-
     override suspend fun createPurchase(request: CreatePurchaseRequest): Result<String> {
         return try {
             val response = apiService.createPurchase(request)
             if (response.isSuccessful && response.body()?.success == true) {
                 Result.success(response.body()!!.data.id)
             } else {
-                Result.failure(Exception("Error al registrar la compra"))
-            }
+                val errorMsg = response.errorBody()?.string() ?: "Error HTTP ${response.code()}"
+                android.util.Log.e("BackendError", "El servidor rechazó la compra: $errorMsg")
+                Result.failure(Exception(errorMsg))            }
         } catch (e: Exception) {
             Result.failure(e)
         }

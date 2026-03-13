@@ -31,8 +31,7 @@ class PurchaseHistoryViewModel @Inject constructor(
 
             // 1. Descargas de la API
             getPurchaseHistoryUseCase().onSuccess { apiPurchases ->
-
-                // 2. Enriqueces los datos con Room
+                android.util.Log.d("HistorialDebug", "Compras recibidas de la API: ${apiPurchases.size}")
                 val enrichedPurchases = apiPurchases.map { purchase ->
                     // Buscamos localmente si tenemos la ubicación de este ID
                     val localLocation = localDao.getLocationForPurchase(purchase.id)
