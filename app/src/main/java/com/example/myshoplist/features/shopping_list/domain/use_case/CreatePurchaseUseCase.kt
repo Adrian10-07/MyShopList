@@ -1,7 +1,7 @@
 package com.example.myshoplist.features.shopping_list.domain.use_case
 
-import com.example.myshoplist.core.database.dao.PurchaseLocationDao
-import com.example.myshoplist.core.database.entities.PurchaseLocationEntity
+import com.example.myshoplist.core.database.PurchaseHistory.dao.PurchaseLocationDao
+import com.example.myshoplist.core.database.PurchaseHistory.entities.PurchaseLocationEntity
 import com.example.myshoplist.core.hardware.location.LocationClient
 import com.example.myshoplist.features.shopping_list.data.remote.model.CreatePurchaseRequest
 import com.example.myshoplist.features.shopping_list.domain.repository.ShoppingListRepository
