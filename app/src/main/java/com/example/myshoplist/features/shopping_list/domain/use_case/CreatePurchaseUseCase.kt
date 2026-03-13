@@ -15,10 +15,9 @@ class CreatePurchaseUseCase @Inject constructor(
     suspend operator fun invoke(request: CreatePurchaseRequest): Result<Unit> {
         return try {
             val location = locationClient.getCurrentLocation()
-
             val apiResult = apiRepository.createPurchase(request)
-
-            apiResult.onSuccess { purchaseId ->
+            if (apiResult.isSuccess) {
+                val purchaseId = apiResult.getOrNull()!!
                 if (location != null) {
                     val locationEntity = PurchaseLocationEntity(
                         purchaseId = purchaseId,
@@ -27,9 +26,10 @@ class CreatePurchaseUseCase @Inject constructor(
                     )
                     localDao.insertLocation(locationEntity)
                 }
+                Result.success(Unit)
+            } else {
+                Result.failure(apiResult.exceptionOrNull() ?: Exception("Unknown error"))
             }
-
-            Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }

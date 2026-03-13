@@ -31,6 +31,7 @@ ksp = "2.0.21-1.0.27"
 
 gsonConverter = "2.9.0"
 playServicesLocation = "21.3.0"
+lifecycleViewmodelKtx = "2.10.0"
 
 [libraries]
 
@@ -88,6 +89,7 @@ androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navig
 # GSON
 retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "gsonConverter" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
 [plugins]
 
 android-application = { id = "com.android.application", version.ref = "agp" }

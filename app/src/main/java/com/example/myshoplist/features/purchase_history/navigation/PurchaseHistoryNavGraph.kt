@@ -21,7 +21,7 @@ class PurchaseHistoryNavGraph(): FeatureNavGraph {
 
             PurchaseHistoryScreen(
                 viewModel = purchaseHistoryViewModel,
-                onNavigateToProfile = {
+                onNavigateToBack = {
                     navController.popBackStack()
                 }
             )

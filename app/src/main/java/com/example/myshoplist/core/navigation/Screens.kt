@@ -3,6 +3,8 @@ package com.example.myshoplist.core.navigation
 import kotlinx.serialization.Serializable
 
 @Serializable
+object Profile
+@Serializable
 object Login
 
 @Serializable

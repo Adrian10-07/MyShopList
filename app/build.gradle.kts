@@ -92,6 +92,7 @@ dependencies {
 
     implementation(libs.hilt.android)
     implementation(libs.play.services.location)
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
     ksp(libs.hilt.compiler)
 
     implementation(libs.androidx.hilt.navigation.compose)

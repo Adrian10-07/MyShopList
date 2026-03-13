@@ -38,6 +38,7 @@ import java.text.NumberFormat
 import java.util.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 
@@ -49,6 +50,7 @@ fun ShoppingListScreen(
     userName: String = "PapaFeliz",
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPurchases: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
     onLogout: () -> Unit = {}
 ) {
     val uiState by shoppingListViewModel.uiState.collectAsState()
@@ -111,7 +113,8 @@ fun ShoppingListScreen(
             // Header
             HeaderSection(
                 userName = userName,
-                onLogout = onLogout
+                onLogout = onLogout,
+                onNavigateToProfile = onNavigateToProfile
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -269,6 +272,7 @@ private fun DeleteConfirmationDialog(
 @Composable
 private fun HeaderSection(
     userName: String,
+    onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit
 ) {
     Row(
@@ -290,12 +294,25 @@ private fun HeaderSection(
             )
         }
 
-        Text(
-            text = "CERRAR SESIÓN",
-            fontSize = 12.sp,
-            color = Color(0xFF718096),
-            modifier = Modifier.clickable { onLogout() }
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            IconButton(onClick = onNavigateToProfile) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Ir al Perfil",
+                    tint = Color(0xFF718096),
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(
+                text = "CERRAR SESIÓN",
+                fontSize = 12.sp,
+                color = Color(0xFF718096),
+                modifier = Modifier.clickable { onLogout() }
+            )
+        }
     }
 }
 
@@ -492,6 +509,7 @@ private fun BottomNavigationBar(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .windowInsetsPadding(NavigationBarDefaults.windowInsets)
             .padding(horizontal = 24.dp, vertical = 16.dp),
         shape = RoundedCornerShape(28.dp),
         color = Color(0xFF2D3748),
