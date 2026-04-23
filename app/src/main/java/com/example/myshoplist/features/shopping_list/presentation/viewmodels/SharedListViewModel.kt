@@ -1,16 +1,13 @@
 package com.example.myshoplist.features.shopping_list.presentation.viewmodels
 
-import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
 import com.example.myshoplist.features.shopping_list.domain.use_case.GenerateShareLinkUseCase
 import com.example.myshoplist.features.shopping_list.domain.use_case.ObserveSharedListUseCase
-import com.example.myshoplist.features.shopping_list.domain.use_case.SaveAndSyncListUseCase
 import com.example.myshoplist.features.shopping_list.domain.use_case.ShoppingListUseCase
 import com.example.myshoplist.features.shopping_list.domain.repository.RemoteListDataSource
-import com.example.myshoplist.features.shopping_list.framework.worker.SyncListWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +17,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-// ─── Modelo que la UI consume ────────────────────────────────────────────────
 data class SharedProduct(
     val id: String,
     val name: String,
@@ -33,16 +29,16 @@ data class SharedListUiState(
     val isLoading: Boolean            = false,
     val isSyncing: Boolean            = false,
     val products: List<SharedProduct> = emptyList(),
-    val activeListId: String          = "",   // qué lista se está viendo ahora
+    val activeListId: String          = "",
     val shareLink: String?            = null,
+    val isFinalized: Boolean          = false,  // para mostrar confirmación
     val error: String?                = null
 )
 
-// ─── ViewModel ───────────────────────────────────────────────────────────────
 @HiltViewModel
 class SharedListViewModel @Inject constructor(
-    private val shoppingListUseCase: ShoppingListUseCase,       // Lee Room
-    private val remoteDataSource: RemoteListDataSource,         // Escribe/lee Firestore
+    private val shoppingListUseCase: ShoppingListUseCase,
+    private val remoteDataSource: RemoteListDataSource,
     private val observeSharedListUseCase: ObserveSharedListUseCase,
     private val generateShareLinkUseCase: GenerateShareLinkUseCase,
     private val workManager: WorkManager
@@ -51,26 +47,13 @@ class SharedListViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(SharedListUiState())
     val uiState: StateFlow<SharedListUiState> = _uiState.asStateFlow()
 
-    /**
-     * Punto de entrada principal. Se llama desde LaunchedEffect(listId) en la Screen.
-     *
-     * Flujo:
-     * 1. Carga productos de Room
-     * 2. Los sube a Firestore (solo si hay productos locales)
-     * 3. Empieza a escuchar Firestore en tiempo real
-     *
-     * Así tanto el dueño como el invitado ven siempre los datos de Firestore,
-     * pero el dueño es quien los alimenta desde Room.
-     */
     fun initSharedList(listId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, activeListId = listId) }
 
-            // Paso 1: Cargar productos locales de Room
             shoppingListUseCase()
                 .onSuccess { localProducts ->
                     if (localProducts.isNotEmpty()) {
-                        // Paso 2: Subir a Firestore
                         _uiState.update { it.copy(isSyncing = true) }
                         remoteDataSource.syncProductsToCloud(listId, localProducts)
                             .onFailure { e ->
@@ -78,29 +61,15 @@ class SharedListViewModel @Inject constructor(
                             }
                         _uiState.update { it.copy(isSyncing = false) }
                     }
-
-                    // Paso 3: Escuchar Firestore en tiempo real (sea dueño o invitado)
                     observeFirestore(listId)
                 }
                 .onFailure { e ->
-                    // Si Room falla, igual intentamos escuchar Firestore
-                    // (útil para el invitado que no tiene datos locales)
-                    Log.w("SharedListVM", "Room vacío o error: ${e.message}. Escuchando Firestore.")
+                    Log.w("SharedListVM", "Room vacío: ${e.message}. Escuchando Firestore.")
                     observeFirestore(listId)
                 }
         }
     }
 
-    /**
-     * Escucha el documento de Firestore y convierte el mapa en lista de SharedProduct.
-     *
-     * Estructura esperada en Firestore:
-     * shared_lists/{listId} {
-     *   items: {
-     *     "product_id": { name, category, estimatedPrice, isPurchased }
-     *   }
-     * }
-     */
     private fun observeFirestore(listId: String) {
         viewModelScope.launch {
             observeSharedListUseCase(listId)
@@ -109,16 +78,11 @@ class SharedListViewModel @Inject constructor(
                 }
                 .collect { data ->
                     val products = parseFirestoreProducts(data)
-                    _uiState.update {
-                        it.copy(isLoading = false, products = products)
-                    }
+                    _uiState.update { it.copy(isLoading = false, products = products) }
                 }
         }
     }
 
-    /**
-     * Convierte el mapa crudo de Firestore en una lista de SharedProduct ordenada.
-     */
     @Suppress("UNCHECKED_CAST")
     private fun parseFirestoreProducts(data: Map<String, Any>): List<SharedProduct> {
         val itemsMap = data["items"] as? Map<String, Any> ?: return emptyList()
@@ -134,19 +98,13 @@ class SharedListViewModel @Inject constructor(
         }.sortedBy { it.name }
     }
 
-    // ─── Marcar/desmarcar un producto como comprado ──────────────────────────
-    /**
-     * Actualización optimista: cambia la UI de inmediato y luego actualiza Firestore.
-     * Si Firestore falla, revierte el cambio.
-     */
+    // ─── Marcar/desmarcar producto ────────────────────────────────────────────
     fun toggleProduct(listId: String, productId: String) {
-        // Si el usuario pegó un link, usa ese listId activo; si no, el propio
         val activeId = _uiState.value.activeListId.ifBlank { listId }
-        val current = _uiState.value.products
-        val product = current.find { it.id == productId } ?: return
+        val product  = _uiState.value.products.find { it.id == productId } ?: return
         val newValue = !product.isPurchased
 
-        // Actualización optimista: cambia la UI sin esperar a Firestore
+        // Optimista
         _uiState.update { state ->
             state.copy(products = state.products.map {
                 if (it.id == productId) it.copy(isPurchased = newValue) else it
@@ -156,7 +114,7 @@ class SharedListViewModel @Inject constructor(
         viewModelScope.launch {
             remoteDataSource.toggleProductInCloud(activeId, productId, newValue)
                 .onFailure {
-                    // Revertir si Firestore falla
+                    // Revertir
                     _uiState.update { state ->
                         state.copy(products = state.products.map {
                             if (it.id == productId) it.copy(isPurchased = !newValue) else it
@@ -166,12 +124,26 @@ class SharedListViewModel @Inject constructor(
         }
     }
 
-    // ─── Cargar lista desde un link pegado por el usuario ────────────────────
+    // ─── Finalizar compra compartida ──────────────────────────────────────────
     /**
-     * Acepta tanto el link completo como solo el listId:
-     *   "myshoplist://shared?listId=abc123"  →  extrae "abc123"
-     *   "abc123"                             →  usa directamente
+     * Resetea todos los isPurchased a false en Firestore.
+     * Ambos usuarios ven la lista limpia en tiempo real.
      */
+    fun finalizeSharedPurchase(listId: String) {
+        val activeId = _uiState.value.activeListId.ifBlank { listId }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            remoteDataSource.finalizeSharedPurchase(activeId)
+                .onSuccess {
+                    _uiState.update { it.copy(isLoading = false, isFinalized = true) }
+                }
+                .onFailure { e ->
+                    _uiState.update { it.copy(isLoading = false, error = e.message) }
+                }
+        }
+    }
+
+    // ─── Cargar lista desde link pegado ──────────────────────────────────────
     fun loadFromLink(input: String) {
         val listId = if (input.contains("listId=")) {
             input.substringAfter("listId=").trim()
@@ -184,24 +156,23 @@ class SharedListViewModel @Inject constructor(
             return
         }
 
-        // Cambia la lista activa y empieza a escuchar esa lista en Firestore.
-        // No sincroniza Room → Firestore porque el usuario B solo quiere ver, no sobrescribir.
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, activeListId = listId, products = emptyList()) }
             observeFirestore(listId)
         }
     }
 
-    // ─── Generar link para compartir ─────────────────────────────────────────
+    // ─── Compartir ────────────────────────────────────────────────────────────
     fun onShareList(listId: String) {
+        val activeId = _uiState.value.activeListId.ifBlank { listId }
         viewModelScope.launch {
-            generateShareLinkUseCase(listId)
+            generateShareLinkUseCase(activeId)
                 .onSuccess { link -> _uiState.update { it.copy(shareLink = link) } }
                 .onFailure { e -> _uiState.update { it.copy(error = e.message) } }
         }
     }
 
-    // ─── Limpiar estados ─────────────────────────────────────────────────────
-    fun onErrorShown()     = _uiState.update { it.copy(error = null) }
-    fun onShareLinkShown() = _uiState.update { it.copy(shareLink = null) }
+    fun onErrorShown()      = _uiState.update { it.copy(error = null) }
+    fun onShareLinkShown()  = _uiState.update { it.copy(shareLink = null) }
+    fun onFinalizedShown()  = _uiState.update { it.copy(isFinalized = false) }
 }

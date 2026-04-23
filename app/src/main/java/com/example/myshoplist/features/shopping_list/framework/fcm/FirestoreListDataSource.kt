@@ -2,7 +2,6 @@ package com.example.myshoplist.features.shopping_list.framework.fcm
 
 import com.example.myshoplist.features.product.domain.entities.Product
 import com.example.myshoplist.features.shopping_list.domain.repository.RemoteListDataSource
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.channels.awaitClose
@@ -18,7 +17,6 @@ class FirestoreListDataSource @Inject constructor(
     private val sharedListsCollection = firestore.collection("shared_lists")
     private val userTokensCollection  = firestore.collection("user_tokens")
 
-    // ─── 1. Actualizar campos sueltos de la lista ────────────────────────────
     override suspend fun syncListToCloud(listId: String, data: Map<String, Any>): Result<Boolean> {
         return try {
             sharedListsCollection.document(listId)
@@ -30,42 +28,49 @@ class FirestoreListDataSource @Inject constructor(
         }
     }
 
-    // ─── 2. Subir lista completa de productos desde Room ────────────────────
     /**
-     * Estructura en Firestore:
-     * shared_lists/{listId} {
-     *   items: {
-     *     "product_id_1": { name, category, estimatedPrice, isPurchased },
-     *     "product_id_2": { ... }
-     *   },
-     *   updatedAt: 123456
-     * }
+     * Sube los productos de Room a Firestore PRESERVANDO el estado isPurchased
+     * que ya exista en la nube. Así al salir y volver a entrar los checkmarks
+     * no se resetean.
      *
-     * Se usa merge para no sobreescribir isPurchased que otro usuario tocó.
-     * Solo sube productos que aún NO están en la nube (isPurchased == 0).
+     * Estrategia:
+     * 1. Lee el documento actual de Firestore
+     * 2. Para cada producto local, preserva el isPurchased que ya esté en Firestore
+     * 3. Solo escribe los productos que sean NUEVOS (no existen en Firestore aún)
      */
     override suspend fun syncProductsToCloud(
         listId: String,
         products: List<Product>
     ): Result<Boolean> {
         return try {
+            // Paso 1: Leer estado actual de Firestore
+            val existingDoc = sharedListsCollection.document(listId).get().await()
+
+            @Suppress("UNCHECKED_CAST")
+            val existingItems = (existingDoc.data?.get("items") as? Map<String, Any>) ?: emptyMap()
+
+            // Paso 2: Construir mapa preservando isPurchased existente
             val itemsMap = products.associate { product ->
                 val key = product.id ?: return Result.failure(Exception("Producto sin ID"))
+
+                // Si el producto ya existe en Firestore, usa su isPurchased actual
+                val existingItem  = existingItems[key] as? Map<String, Any>
+                val isPurchased   = existingItem?.get("isPurchased") as? Boolean
+                    ?: (product.isPurchased == 1)
+
                 key to mapOf(
                     "name"           to product.name,
                     "category"       to product.category,
                     "estimatedPrice" to product.estimatedPrice,
-                    "isPurchased"    to (product.isPurchased == 1)
+                    "isPurchased"    to isPurchased
                 )
             }
 
-            val data = mapOf(
-                "items"     to itemsMap,
-                "updatedAt" to System.currentTimeMillis()
-            )
-
             sharedListsCollection.document(listId)
-                .set(data, SetOptions.merge())
+                .set(
+                    mapOf("items" to itemsMap, "updatedAt" to System.currentTimeMillis()),
+                    SetOptions.merge()
+                )
                 .await()
 
             Result.success(true)
@@ -74,10 +79,9 @@ class FirestoreListDataSource @Inject constructor(
         }
     }
 
-    // ─── 3. Cambiar isPurchased de un producto individual ───────────────────
     /**
-     * Solo actualiza el campo "items.{productId}.isPurchased" usando dot-notation.
-     * Esto es atómico — no sobreescribe el resto del documento.
+     * Cambia isPurchased de un producto individual usando dot-notation.
+     * Solo toca ese campo, nada más del documento.
      */
     override suspend fun toggleProductInCloud(
         listId: String,
@@ -94,7 +98,30 @@ class FirestoreListDataSource @Inject constructor(
         }
     }
 
-    // ─── 4. Escuchar cambios en tiempo real ─────────────────────────────────
+    override suspend fun finalizeSharedPurchase(listId: String): Result<Boolean> {
+        return try {
+            val doc = sharedListsCollection.document(listId).get().await()
+
+            @Suppress("UNCHECKED_CAST")
+            val existingItems = (doc.data?.get("items") as? Map<String, Any>) ?: emptyMap()
+
+            // Construye el mapa con todos los isPurchased en false
+            val resetItems = existingItems.mapValues { (_, value) ->
+                val item = (value as? Map<String, Any>)?.toMutableMap() ?: mutableMapOf()
+                item["isPurchased"] = false
+                item
+            }
+
+            sharedListsCollection.document(listId)
+                .update("items", resetItems)
+                .await()
+
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override fun observeSharedList(listId: String): Flow<Map<String, Any>> = callbackFlow {
         val listener = sharedListsCollection.document(listId)
             .addSnapshotListener { snapshot, error ->
@@ -106,7 +133,6 @@ class FirestoreListDataSource @Inject constructor(
         awaitClose { listener.remove() }
     }
 
-    // ─── 5. Guardar token FCM ────────────────────────────────────────────────
     override suspend fun saveFcmToken(userId: String, token: String): Result<Boolean> {
         return try {
             userTokensCollection.document(userId)
@@ -119,7 +145,6 @@ class FirestoreListDataSource @Inject constructor(
         }
     }
 
-    // ─── 6. Generar link de invitación ───────────────────────────────────────
     override suspend fun generateShareLink(listId: String): Result<String> {
         return try {
             sharedListsCollection.document(listId)

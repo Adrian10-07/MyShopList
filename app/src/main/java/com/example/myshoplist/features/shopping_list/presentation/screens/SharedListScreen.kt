@@ -76,6 +76,14 @@ fun SharedListScreen(
         }
     }
 
+    // Snackbar de confirmación al finalizar
+    LaunchedEffect(uiState.isFinalized) {
+        if (uiState.isFinalized) {
+            snackbarHostState.showSnackbar("¡Compra finalizada! La lista fue limpiada.")
+            viewModel.onFinalizedShown()
+        }
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = Color(0xFFFFF5E6),
@@ -168,63 +176,96 @@ fun SharedListScreen(
                         }
                     }
 
-                    // Hay productos
                     else -> {
-                        val pendientes  = uiState.products.filter { !it.isPurchased }
-                        val comprados   = uiState.products.filter { it.isPurchased }
-                        val total       = uiState.products.sumOf { it.estimatedPrice }
+                        val pendientes   = uiState.products.filter { !it.isPurchased }
+                        val comprados    = uiState.products.filter { it.isPurchased }
+                        val total        = uiState.products.sumOf { it.estimatedPrice }
                         val totalComprado = comprados.sumOf { it.estimatedPrice }
 
-                        LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(vertical = 16.dp)
-                        ) {
-                            // Resumen de totales
-                            item {
-                                SharedListSummaryCard(
-                                    total = total,
-                                    totalComprado = totalComprado,
-                                    comprados = comprados.size,
-                                    pendientes = pendientes.size
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                            }
+                        Column(modifier = Modifier.fillMaxSize()) {
 
-                            // Pendientes
-                            if (pendientes.isNotEmpty()) {
+                            LazyColumn(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                contentPadding = PaddingValues(vertical = 16.dp)
+                            ) {
+                                // Resumen de totales
                                 item {
-                                    Text(
-                                        "Pendientes (${pendientes.size})",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = Color(0xFF718096)
+                                    SharedListSummaryCard(
+                                        total = total,
+                                        totalComprado = totalComprado,
+                                        comprados = comprados.size,
+                                        pendientes = pendientes.size
                                     )
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.height(16.dp))
                                 }
-                                items(pendientes, key = { it.id }) { product ->
-                                    SharedProductCard(
-                                        product = product,
-                                        onToggle = { viewModel.toggleProduct(listId, product.id) }
-                                    )
+
+                                // Pendientes
+                                if (pendientes.isNotEmpty()) {
+                                    item {
+                                        Text(
+                                            "Pendientes (${pendientes.size})",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = Color(0xFF718096)
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
+                                    items(pendientes, key = { it.id }) { product ->
+                                        SharedProductCard(
+                                            product = product,
+                                            onToggle = { viewModel.toggleProduct(listId, product.id) }
+                                        )
+                                    }
+                                }
+
+                                // Comprados
+                                if (comprados.isNotEmpty()) {
+                                    item {
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            "Comprados (${comprados.size})",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = Color(0xFF718096)
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                    }
+                                    items(comprados, key = { it.id }) { product ->
+                                        SharedProductCard(
+                                            product = product,
+                                            onToggle = { viewModel.toggleProduct(listId, product.id) }
+                                        )
+                                    }
                                 }
                             }
 
-                            // Comprados
+                            // Botón Finalizar — visible cuando hay al menos un comprado
                             if (comprados.isNotEmpty()) {
-                                item {
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Button(
+                                    onClick = { viewModel.finalizeSharedPurchase(listId) },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(56.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF4CAF50)
+                                    ),
+                                    shape = RoundedCornerShape(16.dp),
+                                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = Color.White
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        "Comprados (${comprados.size})",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = Color(0xFF718096)
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                }
-                                items(comprados, key = { it.id }) { product ->
-                                    SharedProductCard(
-                                        product = product,
-                                        onToggle = { viewModel.toggleProduct(listId, product.id) }
+                                        "Finalizar Compra",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
                                     )
                                 }
+                                Spacer(modifier = Modifier.height(8.dp))
                             }
                         }
                     }
