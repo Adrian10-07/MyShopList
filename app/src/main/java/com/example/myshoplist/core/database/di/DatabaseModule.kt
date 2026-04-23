@@ -4,6 +4,9 @@ import android.content.Context
 import androidx.room.Room
 import com.example.myshoplist.core.database.AppDatabase
 import com.example.myshoplist.core.database.MIGRATION_1_2
+import com.example.myshoplist.core.database.MIGRATION_2_3
+import com.example.myshoplist.core.database.MIGRATION_3_4
+import com.example.myshoplist.core.database.PurchaseHistory.dao.PurchaseHistoryDao
 import com.example.myshoplist.core.database.PurchaseHistory.dao.PurchaseLocationDao
 import com.example.myshoplist.core.database.product.dao.ProductDao
 import com.example.myshoplist.core.database.profile.dao.UserProfileDao
@@ -22,7 +25,7 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase =
         Room.databaseBuilder(context, AppDatabase::class.java, "myshoplist_db")
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
             .build()
 
     @Provides
@@ -37,5 +40,10 @@ object DatabaseModule {
     @Singleton
     fun provideUserProfileDao(db: AppDatabase): UserProfileDao =
          db.userProfileDao()
+
+    @Provides
+    @Singleton
+    fun providePurchaseHistoryDao(db: AppDatabase): PurchaseHistoryDao =
+        db.purchaseHistoryDao()
 
 }

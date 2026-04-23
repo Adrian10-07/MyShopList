@@ -17,6 +17,7 @@ data class PurchaseDto(
 )
 
 data class PurchaseProductDto(
+    @SerializedName("product_id")   val productId: String?,
     @SerializedName("product_name") val productName: String?,
     val category: String?,
     val price: Double?

@@ -6,5 +6,7 @@ import com.example.myshoplist.features.purchase_history.domain.entities.Purchase
 data class PurchaseHistoryState(
     val purchases: List<Purchase> = emptyList(),
     val isLoading: Boolean = true,
-    val error: String? = null
+    val error: String? = null,
+    /** ID de la tarjeta de compra actualmente expandida (null = ninguna). */
+    val expandedPurchaseId: String? = null,
 )

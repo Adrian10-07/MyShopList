@@ -38,6 +38,7 @@ class AddProductRepositoryImpl @Inject constructor(
 
         } catch (e: IOException) {
             // Sin red → guarda con pendingSync=true para el worker
+            Log.d("SYNC", "Sin red, guardando local: $name")
             val local = Product(
                 id             = "local_${UUID.randomUUID()}",
                 userId         = "local_user",
@@ -48,31 +49,13 @@ class AddProductRepositoryImpl @Inject constructor(
                 createdAt      = System.currentTimeMillis().toString(),
             )
             productDao.insertProduct(local.toEntity(pendingSync = true))
+            Log.d("SYNC", "Insertado en Room: ${local.id}")
             syncScheduler.schedule()
             Result.success(local)
 
-        } catch (e: IOException) {
-        Log.d("SYNC", "Sin red, guardando local: $name")  // ← AQUÍ
-
-        val local = Product(
-            id             = "local_${UUID.randomUUID()}",
-            userId         = "local_user",
-            name           = name,
-            category       = category,
-            estimatedPrice = estimatedPrice,
-            isPurchased    = 0,
-            createdAt      = System.currentTimeMillis().toString(),
-        )
-
-        productDao.insertProduct(local.toEntity(pendingSync = true))
-        Log.d("SYNC", "Insertado en Room: ${local.id}")   // ← Y AQUÍ
-
-        syncScheduler.schedule()
-        Result.success(local)
-
-    } catch (e: Exception) {
-        Log.e("SYNC", "Error inesperado: ${e.stackTraceToString()}")  // ← Y AQUÍ
-        Result.failure(e)
-    }
+        } catch (e: Exception) {
+            Log.e("SYNC", "Error inesperado: ${e.stackTraceToString()}")
+            Result.failure(e)
+        }
     }
 }

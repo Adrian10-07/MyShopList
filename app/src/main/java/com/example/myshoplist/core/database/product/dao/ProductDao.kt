@@ -24,6 +24,10 @@ interface ProductDao {
     @Query("DELETE FROM products WHERE id = :id")
     suspend fun deleteProduct(id: String)
 
+    /** Elimina físicamente varios productos de una vez (p.ej. después de finalizar compra). */
+    @Query("DELETE FROM products WHERE id IN (:ids)")
+    suspend fun deleteProductsByIds(ids: List<String>)
+
     /** Marca para borrar offline en lugar de eliminar físicamente. */
     @Query("UPDATE products SET pendingDelete = 1 WHERE id = :id")
     suspend fun markForDeletion(id: String)
@@ -51,11 +55,21 @@ interface ProductDao {
     @Query("UPDATE products SET pendingToggle = 0 WHERE id = :id")
     suspend fun clearPendingToggle(id: String)
 
-    /** Reemplaza todos los productos sincronizados con los del servidor. */
+    /** IDs de todos los productos con alguna operación offline pendiente. */
+    @Query("SELECT id FROM products WHERE pendingDelete = 1 OR pendingSync = 1 OR pendingToggle = 1")
+    suspend fun getAllPendingIds(): List<String>
+
+    /**
+     * Reemplaza los productos sincronizados con los del servidor,
+     * sin tocar los que aún tienen operaciones offline pendientes.
+     */
     @Transaction
     suspend fun replaceAllSynced(remote: List<ProductEntity>) {
+        val pendingIds = getAllPendingIds().toSet()
         deleteAllSynced()
-        remote.forEach { insertProduct(it) }
+        remote
+            .filter { it.id !in pendingIds }
+            .forEach { insertProduct(it) }
     }
 
     @Query("""
