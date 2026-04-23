@@ -2,6 +2,7 @@ package com.example.myshoplist.features.product.data.repository
 
 import android.util.Log
 import com.example.myshoplist.core.database.product.dao.ProductDao
+import com.example.myshoplist.core.session.SessionManager
 import com.example.myshoplist.core.sync.SyncScheduler
 import com.example.myshoplist.features.product.data.datasource.local.mapper.toEntity
 import com.example.myshoplist.features.product.data.datasource.remote.api.ProductApi
@@ -41,7 +42,7 @@ class AddProductRepositoryImpl @Inject constructor(
             Log.d("SYNC", "Sin red, guardando local: $name")
             val local = Product(
                 id             = "local_${UUID.randomUUID()}",
-                userId         = "local_user",
+                userId         = SessionManager.userId ?: "",
                 name           = name,
                 category       = category,
                 estimatedPrice = estimatedPrice,

@@ -14,12 +14,16 @@ interface ProductDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProduct(product: ProductEntity)
 
-    @Query("SELECT * FROM products WHERE pendingDelete = 0 ORDER BY createdAt DESC")
-    fun getProducts(): Flow<List<ProductEntity>>
+    @Query("SELECT * FROM products WHERE pendingDelete = 0 AND userId = :userId ORDER BY createdAt DESC")
+    fun getProducts(userId: String): Flow<List<ProductEntity>>
 
-    /** Lectura única para sync y fallback offline. */
-    @Query("SELECT * FROM products WHERE pendingDelete = 0 ORDER BY createdAt DESC")
-    suspend fun getProductsOnce(): List<ProductEntity>
+    /** Lectura única para sync y fallback offline. Solo devuelve productos del usuario indicado. */
+    @Query("SELECT * FROM products WHERE pendingDelete = 0 AND userId = :userId ORDER BY createdAt DESC")
+    suspend fun getProductsOnce(userId: String): List<ProductEntity>
+
+    /** Elimina TODOS los productos de Room (usado al cambiar de usuario). */
+    @Query("DELETE FROM products")
+    suspend fun deleteAllProducts()
 
     @Query("DELETE FROM products WHERE id = :id")
     suspend fun deleteProduct(id: String)

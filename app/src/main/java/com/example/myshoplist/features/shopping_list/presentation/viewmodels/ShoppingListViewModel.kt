@@ -72,11 +72,9 @@ class ShoppingListViewModel @Inject constructor(
                 _uiState.value = ShoppingListUiState.Success(optimisticItems)
             }
 
-            updateProductUseCase(id).onFailure {
-                // Si falla (p.ej. sin internet ya fue guardado en Room con pendingToggle=1),
-                // recargamos para que la UI refleje el estado real de Room.
-                loadProducts()
-            }
+            // updateProduct es local-only (Room): siempre tiene éxito.
+            // El update optimista de arriba ya refleja el estado correcto en la UI.
+            updateProductUseCase(id)
         }
     }
 
