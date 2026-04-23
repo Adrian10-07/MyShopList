@@ -18,7 +18,8 @@ class AuthRepositoryImpl @Inject constructor(private val api: LoginApi) : AuthRe
 
                 if (body != null && body.success && body.data != null) {
                     SessionManager.authToken = body.data.token
-                    
+                    // userId se actualiza aquí para que LoginUseCase detecte el cambio de usuario
+                    // antes de sobreescribirlo (comparación old vs new).
                     val user = body.data.toDomain()
                     Result.success(user)
                 } else {

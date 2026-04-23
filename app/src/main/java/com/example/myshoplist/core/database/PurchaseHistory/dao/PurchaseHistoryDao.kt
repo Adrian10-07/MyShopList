@@ -51,6 +51,21 @@ interface PurchaseHistoryDao {
         }
     }
 
+    /** Elimina todos los ítems de compras (usado al cambiar de usuario). */
+    @Query("DELETE FROM purchase_items")
+    suspend fun deleteAllPurchaseItems()
+
+    /** Elimina todas las compras (usado al cambiar de usuario). */
+    @Query("DELETE FROM purchases")
+    suspend fun deleteAllPurchases()
+
+    /** Limpia el historial completo en una sola transacción (cambio de usuario). */
+    @Transaction
+    suspend fun deleteAllPurchasesAndItems() {
+        deleteAllPurchaseItems()   // primero los ítems (evita registros huérfanos)
+        deleteAllPurchases()
+    }
+
     /**
      * Reemplaza una compra local pendiente (id local) por la versión del servidor.
      * Usado al sincronizar compras realizadas sin internet.

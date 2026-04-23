@@ -1,6 +1,7 @@
 package com.example.myshoplist.features.shopping_list.data.repository
 
 import com.example.myshoplist.core.database.product.dao.ProductDao
+import com.example.myshoplist.core.session.SessionManager
 import com.example.myshoplist.core.sync.SyncScheduler
 import com.example.myshoplist.features.product.data.datasource.local.mapper.toDomain
 import com.example.myshoplist.features.product.data.datasource.local.mapper.toEntity
@@ -18,6 +19,8 @@ class ShoppingListRepositoryImpl @Inject constructor(
     private val syncScheduler: SyncScheduler,
 ) : ShoppingListRepository {
 
+    /** ID del usuario activo; cadena vacía si aún no hay sesión (no mostrará nada). */
+    private val currentUserId get() = SessionManager.userId ?: ""
 
     override suspend fun getProducts(): Result<List<Product>> {
         return try {
@@ -33,16 +36,16 @@ class ShoppingListRepositoryImpl @Inject constructor(
                     .filter { it.id !in pendingIds }
                     .forEach { productDao.insertProduct(it.toEntity()) }
 
-                // Retornar desde Room: incluye local_UUID pendientes
-                // y excluye automáticamente los marcados con pendingDelete=1.
-                Result.success(productDao.getProductsOnce().map { it.toDomain() })
+                // Retornar desde Room filtrando por usuario activo.
+                // Incluye local_UUID pendientes del usuario y excluye pendingDelete=1.
+                Result.success(productDao.getProductsOnce(currentUserId).map { it.toDomain() })
             } else {
-                Result.success(productDao.getProductsOnce().map { it.toDomain() })
+                Result.success(productDao.getProductsOnce(currentUserId).map { it.toDomain() })
             }
 
         } catch (e: IOException) {
             // Sin internet → sirve desde Room
-            Result.success(productDao.getProductsOnce().map { it.toDomain() })
+            Result.success(productDao.getProductsOnce(currentUserId).map { it.toDomain() })
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -71,23 +74,13 @@ class ShoppingListRepositoryImpl @Inject constructor(
 
 
     override suspend fun updateProduct(id: String): Result<Unit> {
-        return try {
-            val response = apiService.updateProduct(id)
-
-            if (response.isSuccessful) {
-                productDao.toggleIsPurchased(id, pending = false)
-                Result.success(Unit)
-            } else {
-                Result.failure(Exception("Error al actualizar: ${response.code()}"))
-            }
-
-        } catch (e: IOException) {
-            productDao.toggleIsPurchased(id, pending = true)
-            syncScheduler.schedule()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
+        // El toggle de selección es una operación PURAMENTE LOCAL en Room.
+        // El servidor tiene una validación que rechaza CREATE PURCHASE si
+        // isPurchased=1 ya está seteado vía su propio endpoint PATCH/toggle.
+        // Por eso NO llamamos a la API aquí: el servidor se entera del cambio
+        // únicamente cuando se envía el POST /purchases (finalizePurchase).
+        productDao.toggleIsPurchased(id, pending = false)
+        return Result.success(Unit)
     }
 
     override suspend fun createPurchase(request: CreatePurchaseRequest): Result<String> {
