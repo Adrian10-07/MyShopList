@@ -118,13 +118,11 @@ class SyncRepository @Inject constructor(
                 }
             }
 
-            // ── Fase 3: Subir toggles offline ────────────────────────── //
-            productDao.getPendingToggles().forEach { entity ->
-                val response = shoppingListApi.updateProduct(entity.id)
-                if (response.isSuccessful) {
-                    productDao.clearPendingToggle(entity.id)
-                }
-            }
+            // Fase 3 (toggles) eliminada: el toggle de "seleccionado para comprar"
+            // es local y nunca se sube al servidor individualmente. El servidor
+            // procesa el estado vía POST /purchases (finalizePurchase). Subir
+            // toggles individualmente causaría que CREATE PURCHASE falle con
+            // "Producto ya comprado" porque el backend valida isPurchased=0.
 
             // ── Fase 4: Refrescar lista completa desde el servidor ───── //
             val listResponse = shoppingListApi.getProducts()

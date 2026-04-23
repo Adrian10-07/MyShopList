@@ -17,4 +17,8 @@ interface PurchaseLocationDao {
     /** Actualiza el purchaseId de una ubicación al hacer sync de compra offline. */
     @Query("UPDATE purchase_locations SET purchaseId = :newId WHERE purchaseId = :oldId")
     suspend fun updatePurchaseId(oldId: String, newId: String)
+
+    /** Elimina todas las ubicaciones GPS (usado al cambiar de usuario). */
+    @Query("DELETE FROM purchase_locations")
+    suspend fun deleteAllLocations()
 }
