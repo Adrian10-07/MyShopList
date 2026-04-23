@@ -11,6 +11,7 @@ import com.example.myshoplist.features.shopping_list.presentation.screens.Shoppi
 import com.example.myshoplist.features.shopping_list.presentation.viewmodels.ShoppingListViewModel
 import com.example.myshoplist.features.product.presentation.viewmodels.AddProductViewModel
 import com.example.myshoplist.core.navigation.ShopList
+import com.example.myshoplist.core.navigation.SharedList
 import com.example.myshoplist.features.profile.presentation.screen.ProfileScreen
 import com.example.myshoplist.core.navigation.Profile
 import com.example.myshoplist.features.profile.presentation.viewmodels.ProfileViewModel
@@ -36,6 +37,7 @@ class ShoppingListNavGraph(): FeatureNavGraph {
                 onNavigateToHistory = {navController.navigate(PurchaseHistory)},
                 onNavigateToPurchases = {},
                 onNavigateToProfile = {navController.navigate(Profile)},
+                onNavigateToSharedList = { listId -> navController.navigate(SharedList(listId)) },
                 onLogout = {
                     navController.popBackStack()
                 }

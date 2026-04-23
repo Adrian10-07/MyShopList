@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
+import androidx.compose.material.icons.outlined.Share
 
 
 @Composable
@@ -51,7 +52,8 @@ fun ShoppingListScreen(
     onNavigateToHistory: () -> Unit = {},
     onNavigateToPurchases: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
-    onLogout: () -> Unit = {}
+    onLogout: () -> Unit = {},
+    onNavigateToSharedList: (listId: String) -> Unit = {}
 ) {
     val uiState by shoppingListViewModel.uiState.collectAsState()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -98,7 +100,8 @@ fun ShoppingListScreen(
             BottomNavigationBar(
                 selectedTab = 0,
                 onNavigateToHistory = onNavigateToHistory,
-                onNavigateToPurchases = onNavigateToPurchases
+                onNavigateToPurchases = onNavigateToPurchases,
+                onNavigateToSharedList = { onNavigateToSharedList("mi-lista-principal") }
             )
         }
     ) { paddingValues ->
@@ -504,7 +507,8 @@ private fun EmptyView() {
 private fun BottomNavigationBar(
     selectedTab: Int,
     onNavigateToHistory: () -> Unit,
-    onNavigateToPurchases: () -> Unit
+    onNavigateToPurchases: () -> Unit,
+    onNavigateToSharedList: () -> Unit
 ) {
     Surface(
         modifier = Modifier
@@ -536,6 +540,10 @@ private fun BottomNavigationBar(
                 isSelected = selectedTab == 2,
                 onClick = onNavigateToPurchases
             )
+            NavigationButton(
+                icon = Icons.Outlined.Share,
+                isSelected = selectedTab == 3,
+                onClick = onNavigateToSharedList)
         }
     }
 }

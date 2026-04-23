@@ -12,6 +12,7 @@ import com.example.myshoplist.features.login.navigation.LoginNavGraph
 import com.example.myshoplist.features.profile.navigation.ProfileNavGraph
 import com.example.myshoplist.features.purchase_history.navigation.PurchaseHistoryNavGraph
 import com.example.myshoplist.features.register.navigation.RegisterNavGraph
+import com.example.myshoplist.features.shopping_list.navigation.SharedListNavGraph
 import com.example.myshoplist.features.shopping_list.navigation.ShoppingListNavGraph
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -27,7 +28,8 @@ class MainActivity : FragmentActivity() {
             AddProductNavGraph(),
             ShoppingListNavGraph(),
             PurchaseHistoryNavGraph(),
-            ProfileNavGraph()
+            ProfileNavGraph(),
+            SharedListNavGraph()
         )
 
         setContent {

@@ -16,3 +16,6 @@ object ShopList
 object PurchaseHistory
 @Serializable
 object AddProduct
+
+@Serializable
+data class SharedList(val listId: String)

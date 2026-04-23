@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.devtools.ksp)
 
     id("org.jetbrains.kotlin.plugin.serialization")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -67,49 +68,48 @@ ksp {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
-
     implementation(libs.androidx.lifecycle.runtime.ktx)
-
     implementation(libs.androidx.activity.compose)
-
     implementation(platform(libs.androidx.compose.bom))
-
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.material3)
-
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-
     implementation(libs.androidx.navigation.compose)
-
     implementation(libs.coil.compose)
-
     implementation("androidx.compose.material:material-icons-extended")
+
+    // Networking
     implementation(libs.retrofit)
     implementation(libs.retrofitKotlinxSerializationConverter)
-
-    implementation(libs.hilt.android)
-    implementation(libs.play.services.location)
-    implementation(libs.androidx.lifecycle.viewmodel.ktx)
-    ksp(libs.hilt.compiler)
-
-    implementation(libs.androidx.hilt.navigation.compose)
-
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-
-    ksp(libs.androidx.room.compiler)
-
     implementation(libs.retrofit.gson)
 
-    //BIOMETRIC
-    implementation("androidx.biometric:biometric:1.2.0-alpha05")
-    implementation("com.google.android.gms:play-services-location:21.2.0")
+    // Hilt & Room
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
-    //ROOM SYNC
+    // UI & Location & Biometric
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.material3)
+    implementation(libs.play.services.location)
+    implementation("com.google.android.gms:play-services-location:21.2.0")
+    implementation("androidx.biometric:biometric:1.2.0-alpha05")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
+
+    // WorkManager & Room Sync (usando KSP)
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("androidx.hilt:hilt-work:1.2.0")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
+
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0"))
+    implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.8.0")
 }
