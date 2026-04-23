@@ -2,7 +2,6 @@ package com.tuspaquetes.features.purchase_history.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.myshoplist.core.database.PurchaseHistory.dao.PurchaseLocationDao
 import com.tuspaquetes.features.purchase_history.domain.usecases.GetPurchaseHistoryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +14,7 @@ import javax.inject.Inject
 @HiltViewModel
 class PurchaseHistoryViewModel @Inject constructor(
     private val getPurchaseHistoryUseCase: GetPurchaseHistoryUseCase,
-    private val localDao: PurchaseLocationDao
+    // PurchaseRepositoryImpl ya combina GPS desde Room; no necesitamos el DAO aquí
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PurchaseHistoryState())
@@ -29,25 +28,23 @@ class PurchaseHistoryViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            // 1. Descargas de la API
-            getPurchaseHistoryUseCase().onSuccess { apiPurchases ->
-                android.util.Log.d("HistorialDebug", "Compras recibidas de la API: ${apiPurchases.size}")
-                val enrichedPurchases = apiPurchases.map { purchase ->
-                    // Buscamos localmente si tenemos la ubicación de este ID
-                    val localLocation = localDao.getLocationForPurchase(purchase.id)
-
-                    // Creamos un nuevo objeto de dominio que incluya la ubicación (si existe)
-                    purchase.copy(
-                        latitude = localLocation?.latitude,
-                        longitude = localLocation?.longitude
-                    )
+            getPurchaseHistoryUseCase()
+                .onSuccess { purchases ->
+                    android.util.Log.d("HistorialDebug", "Compras cargadas: ${purchases.size}")
+                    _uiState.update { it.copy(purchases = purchases, isLoading = false) }
                 }
+                .onFailure { e ->
+                    _uiState.update { it.copy(error = e.message, isLoading = false) }
+                }
+        }
+    }
 
-                _uiState.update { it.copy(purchases = enrichedPurchases, isLoading = false) }
-
-            }.onFailure { e ->
-                _uiState.update { it.copy(error = e.message, isLoading = false) }
-            }
+    /** Expande o colapsa el menú desplegable de una tarjeta de compra. */
+    fun toggleExpand(purchaseId: String) {
+        _uiState.update { state ->
+            state.copy(
+                expandedPurchaseId = if (state.expandedPurchaseId == purchaseId) null else purchaseId
+            )
         }
     }
 }
