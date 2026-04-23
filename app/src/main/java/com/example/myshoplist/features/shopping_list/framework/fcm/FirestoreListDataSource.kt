@@ -2,6 +2,7 @@ package com.example.myshoplist.features.shopping_list.framework.fcm
 
 import com.example.myshoplist.features.product.domain.entities.Product
 import com.example.myshoplist.features.shopping_list.domain.repository.RemoteListDataSource
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.channels.awaitClose
@@ -28,35 +29,29 @@ class FirestoreListDataSource @Inject constructor(
         }
     }
 
-    /**
-     * Sube los productos de Room a Firestore PRESERVANDO el estado isPurchased
-     * que ya exista en la nube. Así al salir y volver a entrar los checkmarks
-     * no se resetean.
-     *
-     * Estrategia:
-     * 1. Lee el documento actual de Firestore
-     * 2. Para cada producto local, preserva el isPurchased que ya esté en Firestore
-     * 3. Solo escribe los productos que sean NUEVOS (no existen en Firestore aún)
-     */
     override suspend fun syncProductsToCloud(
         listId: String,
         products: List<Product>
     ): Result<Boolean> {
         return try {
-            // Paso 1: Leer estado actual de Firestore
             val existingDoc = sharedListsCollection.document(listId).get().await()
 
             @Suppress("UNCHECKED_CAST")
             val existingItems = (existingDoc.data?.get("items") as? Map<String, Any>) ?: emptyMap()
 
-            // Paso 2: Construir mapa preservando isPurchased existente
             val itemsMap = products.associate { product ->
                 val key = product.id ?: return Result.failure(Exception("Producto sin ID"))
 
-                // Si el producto ya existe en Firestore, usa su isPurchased actual
                 val existingItem  = existingItems[key] as? Map<String, Any>
-                val isPurchased   = existingItem?.get("isPurchased") as? Boolean
-                    ?: (product.isPurchased == 1)
+                val rawIsPurchased = existingItem?.get("isPurchased")
+
+                // Parseo robusto del booleano
+                val isPurchased = when(rawIsPurchased) {
+                    is Boolean -> rawIsPurchased
+                    is Number -> rawIsPurchased.toInt() == 1
+                    is String -> rawIsPurchased.toBooleanStrictOrNull() ?: (product.isPurchased == 1)
+                    else -> product.isPurchased == 1
+                }
 
                 key to mapOf(
                     "name"           to product.name,
@@ -79,10 +74,6 @@ class FirestoreListDataSource @Inject constructor(
         }
     }
 
-    /**
-     * Cambia isPurchased de un producto individual usando dot-notation.
-     * Solo toca ese campo, nada más del documento.
-     */
     override suspend fun toggleProductInCloud(
         listId: String,
         productId: String,
@@ -98,22 +89,32 @@ class FirestoreListDataSource @Inject constructor(
         }
     }
 
-    override suspend fun finalizeSharedPurchase(listId: String): Result<Boolean> {
+    // NUEVO: Eliminar un solo producto usando dot-notation y FieldValue.delete()
+    override suspend fun deleteProductInCloud(listId: String, productId: String): Result<Boolean> {
         return try {
-            val doc = sharedListsCollection.document(listId).get().await()
+            sharedListsCollection.document(listId)
+                .update("items.$productId", FieldValue.delete())
+                .await()
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
-            @Suppress("UNCHECKED_CAST")
-            val existingItems = (doc.data?.get("items") as? Map<String, Any>) ?: emptyMap()
+    // MODIFICADO: Ahora limpia todos los productos en lugar de solo ponerlos en false
+    override suspend fun finalizeSharedPurchase(listId: String, purchasedProductIds: List<String>): Result<Boolean> {
+        return try {
+            // Si no hay productos comprados, no hacemos nada y devolvemos éxito
+            if (purchasedProductIds.isEmpty()) return Result.success(true)
 
-            // Construye el mapa con todos los isPurchased en false
-            val resetItems = existingItems.mapValues { (_, value) ->
-                val item = (value as? Map<String, Any>)?.toMutableMap() ?: mutableMapOf()
-                item["isPurchased"] = false
-                item
+            // Preparamos un mapa con las instrucciones de borrado para Firestore
+            val updates = mutableMapOf<String, Any>()
+            purchasedProductIds.forEach { id ->
+                updates["items.$id"] = FieldValue.delete()
             }
 
             sharedListsCollection.document(listId)
-                .update("items", resetItems)
+                .update(updates)
                 .await()
 
             Result.success(true)

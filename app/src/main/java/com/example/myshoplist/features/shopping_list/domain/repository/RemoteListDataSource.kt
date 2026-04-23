@@ -14,10 +14,9 @@ interface RemoteListDataSource {
         productId: String,
         isPurchased: Boolean
     ): Result<Boolean>
+    suspend fun deleteProductInCloud(listId: String, productId: String): Result<Boolean>
 
-    /** Resetea todos los isPurchased a false para limpiar la lista compartida */
-    suspend fun finalizeSharedPurchase(listId: String): Result<Boolean>
-
+    suspend fun finalizeSharedPurchase(listId: String, purchasedProductIds: List<String>): Result<Boolean>
     fun observeSharedList(listId: String): Flow<Map<String, Any>>
 
     suspend fun saveFcmToken(userId: String, token: String): Result<Boolean>
