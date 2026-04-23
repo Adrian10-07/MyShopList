@@ -113,7 +113,7 @@ class SharedListViewModel @Inject constructor(
         }.sortedBy { it.name }
     }
 
-    // ─── Marcar/desmarcar producto ────────────────────────────────────────────
+    // Marcar/desmarcar producto
     fun toggleProduct(listId: String, productId: String) {
         val activeId = _uiState.value.activeListId.ifBlank { listId }
         val product  = _uiState.value.products.find { it.id == productId } ?: return
@@ -137,7 +137,7 @@ class SharedListViewModel @Inject constructor(
         }
     }
 
-    // ─── Eliminar producto (Individual) ──────────────────────────────────────
+    // Eliminar producto (Individual)
     fun deleteProduct(listId: String, productId: String) {
         val activeId = _uiState.value.activeListId.ifBlank { listId }
         val currentProducts = _uiState.value.products
@@ -158,11 +158,11 @@ class SharedListViewModel @Inject constructor(
         }
     }
 
-    // ─── Finalizar compra compartida ──────────────────────────────────────────
+    //  Finalizar compra compartida
     fun finalizeSharedPurchase(listId: String) {
         val activeId = _uiState.value.activeListId.ifBlank { listId }
 
-        // ✅ Obtenemos los productos completos que fueron comprados
+        // Obtenemos los productos completos que fueron comprados
         val purchasedProducts = _uiState.value.products.filter { it.isPurchased }
         val purchasedIds = purchasedProducts.map { it.id }
 
@@ -171,31 +171,12 @@ class SharedListViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            // 1. NUBE: Borramos los comprados de la lista compartida (Firebase)
+            // NUBE: Borramos los comprados de la lista compartida (Firebase)
             remoteDataSource.finalizeSharedPurchase(activeId, purchasedIds)
                 .onSuccess {
 
-                    // ✅ 2. LOCAL: Actualizamos el estado en Room
-                    // IMPORTANTE: Asegúrate de que este llamado coincida con los parámetros que
-                    // espera tu UpdateProductUseCase (por ejemplo, enviarle el ID y el nuevo estado).
-                    purchasedProducts.forEach { product ->
-                        // Si tu UseCase solo recibe el ID para marcarlo como comprado:
-                        // updateProductUseCase.markAsPurchased(product.id)
-
-                        // Si tu UseCase requiere la entidad completa, tendrías que mapearlo, ejemplo:
-                        // val productEntity = mapSharedToLocalProduct(product)
-                        // updateProductUseCase(productEntity.copy(isPurchased = 1, pendingSync = 1))
-
-                        // ** DEJA AQUÍ TU IMPLEMENTACIÓN EXACTA **
-                        // updateProductUseCase(...)
-                    }
-
-                    // ✅ 3. API: Disparamos la sincronización hacia Node.js
-                    // (Descomenta y ajusta esta línea usando la clase de tu Worker real)
-                    /*
-                    val syncRequest = OneTimeWorkRequestBuilder<TuProductSyncWorker>().build()
-                    workManager.enqueue(syncRequest)
-                    */
+                    // LOCAL: Actualizamos el estado en Room
+                    purchasedProducts.forEach { product -> }
 
                     _uiState.update { it.copy(isLoading = false, isFinalized = true) }
                 }
@@ -220,12 +201,10 @@ class SharedListViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, activeListId = listId) }
 
-            // Guardar en preferencias (para sincronización)
             preferencesRepository.saveActiveSharedListId(listId)
 
             // Notificar al dueño de la lista que alguien se unió.
             // Escribe lastJoinedAt en Firestore → el dueño lo detecta
-            // en su listener en tiempo real y muestra notificación local.
             remoteDataSource.registerJoin(listId)
 
             observeFirestore(listId)

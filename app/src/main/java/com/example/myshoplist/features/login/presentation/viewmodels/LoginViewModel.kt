@@ -23,10 +23,6 @@ class LoginViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(LoginUIState())
     val uiState = _uiState.asStateFlow()
 
-    // ------------------------------------------------------------------ //
-    //  Formulario                                                          //
-    // ------------------------------------------------------------------ //
-
     fun onEmailChanged(email: String) {
         _uiState.update { it.copy(email = email) }
     }
@@ -34,10 +30,6 @@ class LoginViewModel @Inject constructor(
     fun onPasswordChanged(password: String) {
         _uiState.update { it.copy(password = password) }
     }
-
-    // ------------------------------------------------------------------ //
-    //  Login con email + contraseña                                        //
-    // ------------------------------------------------------------------ //
 
     fun login() {
         viewModelScope.launch {
@@ -55,10 +47,6 @@ class LoginViewModel @Inject constructor(
             )
         }
     }
-
-    // ------------------------------------------------------------------ //
-    //  Login con huella digital                                            //
-    // ------------------------------------------------------------------ //
 
     /** Llama a esta función desde la UI pasando el Activity actual. */
     fun loginWithBiometric(activity: FragmentActivity) {

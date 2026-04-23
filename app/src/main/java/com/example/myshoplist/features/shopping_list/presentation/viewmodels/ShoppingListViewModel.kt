@@ -41,16 +41,10 @@ class ShoppingListViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<ShoppingListUiState>(ShoppingListUiState.Loading)
     val uiState: StateFlow<ShoppingListUiState> = _uiState.asStateFlow()
 
-    // null  → todavía no hemos recibido el primer snapshot de Firestore.
-    // 0L+   → valor baseline ya conocido; cualquier valor mayor es un join nuevo.
-    // Usar null en lugar de 0L evita que la condición "!= 0L" bloquee la primera
-    // notificación cuando nadie ha entrado nunca (lastJoinedAt ausente del documento).
     private var lastKnownJoinedAt: Long? = null
 
     init {
         loadProducts()
-        // Usar ANDROID_ID directamente — mismo valor que usa SharedListNavGraph.
-        // Así siempre escuchamos el documento correcto sin depender de preferencias.
         val listId = Settings.Secure.getString(
             context.contentResolver,
             Settings.Secure.ANDROID_ID
@@ -73,14 +67,6 @@ class ShoppingListViewModel @Inject constructor(
         }
     }
 
-    // ─── Escuchar Firestore y sincronizar con Room ────────────────────────────
-    /**
-     * Corre en background mientras el ViewModel está vivo.
-     * Cada vez que Firestore cambia (otro usuario marca/desmarca/finaliza),
-     * sincroniza el estado de isPurchased en Room y refresca la UI.
-     *
-     * distinctUntilChanged evita procesar el mismo snapshot dos veces.
-     */
     private fun startCloudSync(listId: String) {
         viewModelScope.launch {
             observeSharedListUseCase(listId)
@@ -91,9 +77,7 @@ class ShoppingListViewModel @Inject constructor(
                     val joinedAt = (cloudData["lastJoinedAt"] as? Number)?.toLong() ?: 0L
                     val previous = lastKnownJoinedAt
                     if (previous == null) {
-                        // Primer snapshot: solo establecemos el baseline, sin notificar.
-                        // Así evitamos mostrar una notificación "fantasma" al abrir la app
-                        // si alguien ya se había unido antes.
+
                         lastKnownJoinedAt = joinedAt
                     } else if (joinedAt > previous) {
                         // Join nuevo ocurrido mientras la app estaba abierta.
@@ -106,14 +90,6 @@ class ShoppingListViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Compara el estado de Firestore contra Room y aplica los cambios necesarios.
-     *
-     * Casos:
-     * A) Producto está en Firestore con isPurchased=true y en Room es 0 → marcarlo
-     * B) Producto está en Firestore con isPurchased=false y en Room es 1 → desmarcarlo
-     * C) Producto ya no existe en Firestore (finalizaron la lista) y en Room es 0 → marcarlo
-     */
     private suspend fun syncCloudToLocal(cloudData: Map<String, Any>) {
         @Suppress("UNCHECKED_CAST")
         val cloudItems = (cloudData["items"] as? Map<String, Any>)
@@ -161,8 +137,6 @@ class ShoppingListViewModel @Inject constructor(
         is String  -> value.toBooleanStrictOrNull() ?: false
         else       -> false
     }
-
-    // ─── Operaciones locales ──────────────────────────────────────────────────
 
     fun deleteProduct(id: String) {
         viewModelScope.launch {

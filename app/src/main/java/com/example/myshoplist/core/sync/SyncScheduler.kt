@@ -10,14 +10,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Encola [SyncWorker] con restricción de red conectada.
- *
- * WorkManager lo ejecutará en cuanto el dispositivo tenga internet,
- * aunque la app esté en segundo plano o cerrada.
- *
- * Llama a [schedule] cada vez que se guarde cualquier cambio offline.
- */
 @Singleton
 class SyncScheduler @Inject constructor(
     @ApplicationContext private val context: Context,

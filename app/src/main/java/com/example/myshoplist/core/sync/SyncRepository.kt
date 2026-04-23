@@ -26,14 +26,11 @@ class SyncRepository @Inject constructor(
     private val purchaseHistoryDao: PurchaseHistoryDao,
     private val purchaseLocationDao: PurchaseLocationDao,
 ) {
-    /**
-     * Sube al servidor todos los cambios pendientes y luego refresca Room.
-     * Retorna [Result.success] si al menos el proceso corrió sin errores de red.
-     */
+
     suspend fun sync(): Result<Unit> {
         return try {
 
-            // ── Fase 0: Subir compras offline pendientes ─────────────── //
+            // Subir compras offline pendientes //
             purchaseHistoryDao.getPendingPurchases().forEach { entity ->
                 val items = purchaseHistoryDao.getItemsForPurchase(entity.id)
                 val request = CreatePurchaseRequest(
@@ -79,7 +76,7 @@ class SyncRepository @Inject constructor(
                 }
             }
 
-            // ── Fase 1: Subir inserciones offline ────────────────────── //
+            //  Subir inserciones offline //
             val pendingInserts = productDao.getPendingInserts()
 
             // Productos creados Y borrados offline antes de sincronizarse:
@@ -107,7 +104,7 @@ class SyncRepository @Inject constructor(
                     // Si falla un item, se omite y se reintentará en el próximo sync
                 }
 
-            // ── Fase 2: Subir eliminaciones offline ──────────────────── //
+            //  Subir eliminaciones offline  //
             productDao.getPendingDeletions().forEach { entity ->
                 val response = shoppingListApi.deleteProduct(entity.id)
                 // Tratamos 404 como éxito: el producto ya no existe en el servidor
@@ -117,14 +114,7 @@ class SyncRepository @Inject constructor(
                     Log.d("SYNC", "Eliminación sincronizada: ${entity.id} (HTTP ${response.code()})")
                 }
             }
-
-            // Fase 3 (toggles) eliminada: el toggle de "seleccionado para comprar"
-            // es local y nunca se sube al servidor individualmente. El servidor
-            // procesa el estado vía POST /purchases (finalizePurchase). Subir
-            // toggles individualmente causaría que CREATE PURCHASE falle con
-            // "Producto ya comprado" porque el backend valida isPurchased=0.
-
-            // ── Fase 4: Refrescar lista completa desde el servidor ───── //
+            //  Refrescar lista completa desde el servidor  //
             val listResponse = shoppingListApi.getProducts()
             if (listResponse.isSuccessful && listResponse.body()?.success == true) {
                 val remote = listResponse.body()!!.data

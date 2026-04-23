@@ -9,6 +9,5 @@ data class PurchaseEntity(
     val totalAmount: Double,
     val purchaseDate: String,
     val itemCount: Int,
-    /** true cuando la compra se realizó sin internet y aún no se ha subido al servidor. */
     val pendingSync: Boolean = false,
 )
