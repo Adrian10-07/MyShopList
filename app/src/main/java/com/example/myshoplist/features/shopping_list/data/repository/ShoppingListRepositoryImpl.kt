@@ -25,9 +25,17 @@ class ShoppingListRepositoryImpl @Inject constructor(
 
             if (response.isSuccessful && response.body()?.success == true) {
                 val remote = response.body()!!.data.toDomain()
-                // Refresca Room con los datos del servidor
-                remote.forEach { productDao.insertProduct(it.toEntity()) }
-                Result.success(remote)
+
+                // Proteger productos con operaciones offline pendientes:
+                // insertProduct con REPLACE resetearía sus flags a false.
+                val pendingIds = productDao.getAllPendingIds().toSet()
+                remote
+                    .filter { it.id !in pendingIds }
+                    .forEach { productDao.insertProduct(it.toEntity()) }
+
+                // Retornar desde Room: incluye local_UUID pendientes
+                // y excluye automáticamente los marcados con pendingDelete=1.
+                Result.success(productDao.getProductsOnce().map { it.toDomain() })
             } else {
                 Result.success(productDao.getProductsOnce().map { it.toDomain() })
             }
@@ -90,7 +98,12 @@ class ShoppingListRepositoryImpl @Inject constructor(
             } else {
                 val errorMsg = response.errorBody()?.string() ?: "Error HTTP ${response.code()}"
                 android.util.Log.e("BackendError", "El servidor rechazó la compra: $errorMsg")
-                Result.failure(Exception(errorMsg))            }
+                Result.failure(Exception(errorMsg))
+            }
+        } catch (e: IOException) {
+            // Re-lanzamos IOException para que CreatePurchaseUseCase la capture
+            // y ejecute el guardado offline.
+            throw e
         } catch (e: Exception) {
             Result.failure(e)
         }

@@ -5,6 +5,7 @@ data class Purchase(
     val totalAmount: Double,
     val purchaseDate: String,
     val itemCount: Int,
+    val products: List<PurchaseProduct> = emptyList(),
     val latitude: Double? = null,
-    val longitude: Double? = null
+    val longitude: Double? = null,
 )

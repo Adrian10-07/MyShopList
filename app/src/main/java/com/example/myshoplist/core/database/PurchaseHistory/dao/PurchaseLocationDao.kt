@@ -13,4 +13,8 @@ interface PurchaseLocationDao {
 
     @Query("SELECT * FROM purchase_locations WHERE purchaseId = :purchaseId")
     suspend fun getLocationForPurchase(purchaseId: String): PurchaseLocationEntity?
+
+    /** Actualiza el purchaseId de una ubicación al hacer sync de compra offline. */
+    @Query("UPDATE purchase_locations SET purchaseId = :newId WHERE purchaseId = :oldId")
+    suspend fun updatePurchaseId(oldId: String, newId: String)
 }
