@@ -31,7 +31,7 @@ data class SharedListUiState(
     val products: List<SharedProduct> = emptyList(),
     val activeListId: String          = "",
     val shareLink: String?            = null,
-    val isFinalized: Boolean          = false,  // para mostrar confirmación
+    val isFinalized: Boolean          = false,
     val error: String?                = null
 )
 
@@ -88,12 +88,22 @@ class SharedListViewModel @Inject constructor(
         val itemsMap = data["items"] as? Map<String, Any> ?: return emptyList()
         return itemsMap.entries.mapNotNull { (id, value) ->
             val item = value as? Map<String, Any> ?: return@mapNotNull null
+
+            // MODIFICADO: Parseo robusto del estado de compra
+            val rawIsPurchased = item["isPurchased"]
+            val isPurchased = when (rawIsPurchased) {
+                is Boolean -> rawIsPurchased
+                is Number -> rawIsPurchased.toInt() == 1
+                is String -> rawIsPurchased.toBooleanStrictOrNull() ?: false
+                else -> false
+            }
+
             SharedProduct(
                 id             = id,
                 name           = item["name"] as? String ?: "",
                 category       = item["category"] as? String ?: "",
                 estimatedPrice = (item["estimatedPrice"] as? Number)?.toDouble() ?: 0.0,
-                isPurchased    = item["isPurchased"] as? Boolean ?: false
+                isPurchased    = isPurchased
             )
         }.sortedBy { it.name }
     }
@@ -104,7 +114,6 @@ class SharedListViewModel @Inject constructor(
         val product  = _uiState.value.products.find { it.id == productId } ?: return
         val newValue = !product.isPurchased
 
-        // Optimista
         _uiState.update { state ->
             state.copy(products = state.products.map {
                 if (it.id == productId) it.copy(isPurchased = newValue) else it
@@ -114,7 +123,6 @@ class SharedListViewModel @Inject constructor(
         viewModelScope.launch {
             remoteDataSource.toggleProductInCloud(activeId, productId, newValue)
                 .onFailure {
-                    // Revertir
                     _uiState.update { state ->
                         state.copy(products = state.products.map {
                             if (it.id == productId) it.copy(isPurchased = !newValue) else it
@@ -124,16 +132,44 @@ class SharedListViewModel @Inject constructor(
         }
     }
 
+    // NUEVO ─── Eliminar producto ─────────────────────────────────────────────
+    fun deleteProduct(listId: String, productId: String) {
+        val activeId = _uiState.value.activeListId.ifBlank { listId }
+        val currentProducts = _uiState.value.products
+
+        // Optimista: Eliminarlo de la vista inmediatamente
+        _uiState.update { state ->
+            state.copy(products = state.products.filter { it.id != productId })
+        }
+
+        viewModelScope.launch {
+            remoteDataSource.deleteProductInCloud(activeId, productId)
+                .onFailure { e ->
+                    // Revertir si falla
+                    _uiState.update { state ->
+                        state.copy(products = currentProducts, error = "No se pudo eliminar: ${e.message}")
+                    }
+                }
+        }
+    }
+
     // ─── Finalizar compra compartida ──────────────────────────────────────────
     /**
-     * Resetea todos los isPurchased a false en Firestore.
-     * Ambos usuarios ven la lista limpia en tiempo real.
+     * Limpia completamente la lista en Firestore.
      */
     fun finalizeSharedPurchase(listId: String) {
         val activeId = _uiState.value.activeListId.ifBlank { listId }
+
+        // Filtramos solo los productos comprados y obtenemos sus IDs
+        val purchasedIds = _uiState.value.products
+            .filter { it.isPurchased }
+            .map { it.id }
+
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            remoteDataSource.finalizeSharedPurchase(activeId)
+
+            // Le pasamos la lista de IDs a borrar
+            remoteDataSource.finalizeSharedPurchase(activeId, purchasedIds)
                 .onSuccess {
                     _uiState.update { it.copy(isLoading = false, isFinalized = true) }
                 }
@@ -143,7 +179,6 @@ class SharedListViewModel @Inject constructor(
         }
     }
 
-    // ─── Cargar lista desde link pegado ──────────────────────────────────────
     fun loadFromLink(input: String) {
         val listId = if (input.contains("listId=")) {
             input.substringAfter("listId=").trim()
@@ -162,7 +197,6 @@ class SharedListViewModel @Inject constructor(
         }
     }
 
-    // ─── Compartir ────────────────────────────────────────────────────────────
     fun onShareList(listId: String) {
         val activeId = _uiState.value.activeListId.ifBlank { listId }
         viewModelScope.launch {
