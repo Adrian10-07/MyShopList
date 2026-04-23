@@ -53,8 +53,10 @@ fun ShoppingListScreen(
     onNavigateToPurchases: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
     onLogout: () -> Unit = {},
-    onNavigateToSharedList: (listId: String) -> Unit = {}
+    onNavigateToSharedList: (listId: String) -> Unit = {},
+    onNavigateToAddProduct: () -> Unit,
 ) {
+
     val uiState by shoppingListViewModel.uiState.collectAsState()
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var productToDelete by remember { mutableStateOf<Product?>(null) }

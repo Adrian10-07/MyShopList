@@ -157,4 +157,15 @@ class FirestoreListDataSource @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun registerJoin(listId: String): Result<Boolean> {
+        return try {
+            sharedListsCollection.document(listId)
+                .set(mapOf("lastJoinedAt" to System.currentTimeMillis()), SetOptions.merge())
+                .await()
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

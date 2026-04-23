@@ -40,7 +40,8 @@ class ShoppingListNavGraph(): FeatureNavGraph {
                 onNavigateToSharedList = { listId -> navController.navigate(SharedList(listId)) },
                 onLogout = {
                     navController.popBackStack()
-                }
+                },
+                onNavigateToAddProduct = {},
             )
         }
     }

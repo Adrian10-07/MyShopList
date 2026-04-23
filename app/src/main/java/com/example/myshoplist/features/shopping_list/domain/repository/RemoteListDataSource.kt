@@ -22,4 +22,7 @@ interface RemoteListDataSource {
     suspend fun saveFcmToken(userId: String, token: String): Result<Boolean>
 
     suspend fun generateShareLink(listId: String): Result<String>
+
+
+    suspend fun registerJoin(listId: String): Result<Boolean>
 }

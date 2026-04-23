@@ -4,10 +4,13 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkManager
+// import androidx.work.OneTimeWorkRequestBuilder // Descomenta cuando uses tu Worker real
 import com.example.myshoplist.features.shopping_list.domain.use_case.GenerateShareLinkUseCase
 import com.example.myshoplist.features.shopping_list.domain.use_case.ObserveSharedListUseCase
 import com.example.myshoplist.features.shopping_list.domain.use_case.ShoppingListUseCase
 import com.example.myshoplist.features.shopping_list.domain.repository.RemoteListDataSource
+import com.example.myshoplist.features.shopping_list.domain.repository.UserPreferencesRepository
+import com.example.myshoplist.features.shopping_list.domain.use_case.UpdateProductUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,6 +40,8 @@ data class SharedListUiState(
 
 @HiltViewModel
 class SharedListViewModel @Inject constructor(
+    private val preferencesRepository: UserPreferencesRepository, // Inyectamos el repo
+    private val updateProductUseCase: UpdateProductUseCase, // Inyectamos el caso de uso para actualizar
     private val shoppingListUseCase: ShoppingListUseCase,
     private val remoteDataSource: RemoteListDataSource,
     private val observeSharedListUseCase: ObserveSharedListUseCase,
@@ -89,7 +94,7 @@ class SharedListViewModel @Inject constructor(
         return itemsMap.entries.mapNotNull { (id, value) ->
             val item = value as? Map<String, Any> ?: return@mapNotNull null
 
-            // MODIFICADO: Parseo robusto del estado de compra
+            // Parseo robusto del estado de compra
             val rawIsPurchased = item["isPurchased"]
             val isPurchased = when (rawIsPurchased) {
                 is Boolean -> rawIsPurchased
@@ -132,7 +137,7 @@ class SharedListViewModel @Inject constructor(
         }
     }
 
-    // NUEVO ─── Eliminar producto ─────────────────────────────────────────────
+    // ─── Eliminar producto (Individual) ──────────────────────────────────────
     fun deleteProduct(listId: String, productId: String) {
         val activeId = _uiState.value.activeListId.ifBlank { listId }
         val currentProducts = _uiState.value.products
@@ -154,23 +159,44 @@ class SharedListViewModel @Inject constructor(
     }
 
     // ─── Finalizar compra compartida ──────────────────────────────────────────
-    /**
-     * Limpia completamente la lista en Firestore.
-     */
     fun finalizeSharedPurchase(listId: String) {
         val activeId = _uiState.value.activeListId.ifBlank { listId }
 
-        // Filtramos solo los productos comprados y obtenemos sus IDs
-        val purchasedIds = _uiState.value.products
-            .filter { it.isPurchased }
-            .map { it.id }
+        // ✅ Obtenemos los productos completos que fueron comprados
+        val purchasedProducts = _uiState.value.products.filter { it.isPurchased }
+        val purchasedIds = purchasedProducts.map { it.id }
+
+        if (purchasedIds.isEmpty()) return // No hay nada que finalizar
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
 
-            // Le pasamos la lista de IDs a borrar
+            // 1. NUBE: Borramos los comprados de la lista compartida (Firebase)
             remoteDataSource.finalizeSharedPurchase(activeId, purchasedIds)
                 .onSuccess {
+
+                    // ✅ 2. LOCAL: Actualizamos el estado en Room
+                    // IMPORTANTE: Asegúrate de que este llamado coincida con los parámetros que
+                    // espera tu UpdateProductUseCase (por ejemplo, enviarle el ID y el nuevo estado).
+                    purchasedProducts.forEach { product ->
+                        // Si tu UseCase solo recibe el ID para marcarlo como comprado:
+                        // updateProductUseCase.markAsPurchased(product.id)
+
+                        // Si tu UseCase requiere la entidad completa, tendrías que mapearlo, ejemplo:
+                        // val productEntity = mapSharedToLocalProduct(product)
+                        // updateProductUseCase(productEntity.copy(isPurchased = 1, pendingSync = 1))
+
+                        // ** DEJA AQUÍ TU IMPLEMENTACIÓN EXACTA **
+                        // updateProductUseCase(...)
+                    }
+
+                    // ✅ 3. API: Disparamos la sincronización hacia Node.js
+                    // (Descomenta y ajusta esta línea usando la clase de tu Worker real)
+                    /*
+                    val syncRequest = OneTimeWorkRequestBuilder<TuProductSyncWorker>().build()
+                    workManager.enqueue(syncRequest)
+                    */
+
                     _uiState.update { it.copy(isLoading = false, isFinalized = true) }
                 }
                 .onFailure { e ->
@@ -192,7 +218,16 @@ class SharedListViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, activeListId = listId, products = emptyList()) }
+            _uiState.update { it.copy(isLoading = true, activeListId = listId) }
+
+            // Guardar en preferencias (para sincronización)
+            preferencesRepository.saveActiveSharedListId(listId)
+
+            // Notificar al dueño de la lista que alguien se unió.
+            // Escribe lastJoinedAt en Firestore → el dueño lo detecta
+            // en su listener en tiempo real y muestra notificación local.
+            remoteDataSource.registerJoin(listId)
+
             observeFirestore(listId)
         }
     }
