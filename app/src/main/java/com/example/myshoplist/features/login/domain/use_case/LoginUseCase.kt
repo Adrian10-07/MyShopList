@@ -7,6 +7,9 @@ import com.example.myshoplist.core.database.product.dao.ProductDao
 import com.example.myshoplist.core.session.SessionManager
 import com.example.myshoplist.features.login.domain.entities.AuthUser
 import com.example.myshoplist.features.login.domain.repository.AuthRepository
+import com.example.myshoplist.features.shopping_list.domain.use_case.SaveFcmTokenUseCase
+import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class LoginUseCase @Inject constructor(
@@ -14,6 +17,7 @@ class LoginUseCase @Inject constructor(
     private val productDao: ProductDao,
     private val purchaseHistoryDao: PurchaseHistoryDao,
     private val purchaseLocationDao: PurchaseLocationDao,
+    private val saveFcmTokenUseCase: SaveFcmTokenUseCase,
 ) {
 
     suspend operator fun invoke(email: String, password: String): Result<AuthUser> {
@@ -38,6 +42,17 @@ class LoginUseCase @Inject constructor(
 
             // Actualizar el userId de la sesión activa
             SessionManager.userId = authUser.id
+
+            // Guardar el token FCM actual asociado a este usuario.
+            // El token puede haberse generado antes del login (p.ej. al instalar la app),
+            // por eso lo vinculamos explícitamente aquí con el userId real.
+            try {
+                val token = FirebaseMessaging.getInstance().token.await()
+                saveFcmTokenUseCase(userId = authUser.id, token = token)
+                    .onFailure { Log.w("LOGIN", "No se pudo guardar token FCM: ${it.message}") }
+            } catch (e: Exception) {
+                Log.w("LOGIN", "Error obteniendo token FCM: ${e.message}")
+            }
         }
 
         return result

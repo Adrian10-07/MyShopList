@@ -8,6 +8,7 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.myshoplist.R
+import com.example.myshoplist.core.session.SessionManager
 import com.example.myshoplist.features.shopping_list.domain.use_case.SaveFcmTokenUseCase
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
@@ -45,13 +46,17 @@ class MyShopListMessagingService : FirebaseMessagingService() {
         super.onNewToken(token)
         Log.d(TAG, "Nuevo token generado: $token")
 
-        // Guarda el token en Firestore para poder enviarle notificaciones a este dispositivo.
-        // Cuando integres autenticación, reemplaza USER_PLACEHOLDER por el UID real del usuario.
+        // Guarda el token en Firestore bajo el userId activo para que el servidor
+        // pueda enviar mensajes FCM al dispositivo correcto.
         CoroutineScope(Dispatchers.IO).launch {
-            saveFcmTokenUseCase(
-                userId = "USER_PLACEHOLDER", // TODO: reemplazar con FirebaseAuth.uid
-                token  = token
-            )
+            val userId = SessionManager.userId
+            if (userId.isNullOrBlank()) {
+                Log.w(TAG, "Token FCM generado pero no hay sesión activa. Se guardará al próximo login.")
+                return@launch
+            }
+            saveFcmTokenUseCase(userId = userId, token = token)
+                .onSuccess { Log.d(TAG, "Token FCM guardado para userId=$userId") }
+                .onFailure { Log.e(TAG, "Error guardando token FCM: ${it.message}") }
         }
     }
 

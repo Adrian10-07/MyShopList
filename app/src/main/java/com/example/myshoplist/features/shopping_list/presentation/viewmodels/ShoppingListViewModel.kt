@@ -41,8 +41,11 @@ class ShoppingListViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<ShoppingListUiState>(ShoppingListUiState.Loading)
     val uiState: StateFlow<ShoppingListUiState> = _uiState.asStateFlow()
 
-    // Guarda el último lastJoinedAt que vimos para no notificar el mismo evento dos veces
-    private var lastKnownJoinedAt: Long = 0L
+    // null  → todavía no hemos recibido el primer snapshot de Firestore.
+    // 0L+   → valor baseline ya conocido; cualquier valor mayor es un join nuevo.
+    // Usar null en lugar de 0L evita que la condición "!= 0L" bloquee la primera
+    // notificación cuando nadie ha entrado nunca (lastJoinedAt ausente del documento).
+    private var lastKnownJoinedAt: Long? = null
 
     init {
         loadProducts()
@@ -84,13 +87,19 @@ class ShoppingListViewModel @Inject constructor(
                 .distinctUntilChanged()
                 .catch { e -> Log.e("ShoppingListVM", "Error en sync: ${e.message}") }
                 .collect { cloudData ->
-                    // Detectar si alguien se unió a la lista
+                    // Detectar si alguien se unió a la lista.
                     val joinedAt = (cloudData["lastJoinedAt"] as? Number)?.toLong() ?: 0L
-                    if (joinedAt > lastKnownJoinedAt && lastKnownJoinedAt != 0L) {
-                        // Es un join nuevo (no el primer snapshot al abrir la app)
+                    val previous = lastKnownJoinedAt
+                    if (previous == null) {
+                        // Primer snapshot: solo establecemos el baseline, sin notificar.
+                        // Así evitamos mostrar una notificación "fantasma" al abrir la app
+                        // si alguien ya se había unido antes.
+                        lastKnownJoinedAt = joinedAt
+                    } else if (joinedAt > previous) {
+                        // Join nuevo ocurrido mientras la app estaba abierta.
+                        lastKnownJoinedAt = joinedAt
                         notificationHelper.showSomeoneJoined()
                     }
-                    lastKnownJoinedAt = joinedAt
 
                     syncCloudToLocal(cloudData)
                 }

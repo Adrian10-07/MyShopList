@@ -1,6 +1,8 @@
 package com.example.myshoplist.features.shopping_list.presentation.screens
 
 import android.content.pm.PackageManager
+import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -62,12 +64,36 @@ fun ShoppingListScreen(
     var productToDelete by remember { mutableStateOf<Product?>(null) }
     val context = LocalContext.current
 
+    // ID único de este dispositivo — usado como listId de la lista compartida.
+    // Debe coincidir exactamente con el valor que usa ShoppingListViewModel.startCloudSync().
+    val sharedListId = remember {
+        Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+    }
+
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
         onResult = {
             shoppingListViewModel.finalizePurchase()
         }
     )
+
+    // Solicitar permiso de notificaciones en Android 13+ (API 33+).
+    // Sin este permiso POST_NOTIFICATIONS las notificaciones locales son silenciadas.
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { /* permiso concedido o denegado — no bloqueante */ }
+    )
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val granted = ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!granted) {
+                notificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
     LaunchedEffect(uiState) {
         val logData = JSONObject().apply {
             put("timestamp", System.currentTimeMillis())
@@ -103,7 +129,7 @@ fun ShoppingListScreen(
                 selectedTab = 0,
                 onNavigateToHistory = onNavigateToHistory,
                 onNavigateToPurchases = onNavigateToPurchases,
-                onNavigateToSharedList = { onNavigateToSharedList("mi-lista-principal") }
+                onNavigateToSharedList = { onNavigateToSharedList(sharedListId) }
             )
         }
     ) { paddingValues ->
